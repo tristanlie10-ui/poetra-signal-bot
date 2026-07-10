@@ -1,0 +1,32 @@
+# Simpan file ini di repo GitHub Anda pada path:  .github/workflows/poetra-signal.yml
+name: POETRA XAUUSD Signal Bot
+
+on:
+  schedule:
+    # Setiap 15 menit, jam 06:00–16:00 UTC (= 13:00–23:00 WIB), Senin–Jumat.
+    # Menutup sesi London + New York (jam terbaik XAUUSD). Cron GitHub Actions memakai UTC.
+    - cron: "*/15 6-16 * * 1-5"
+  workflow_dispatch:   # tombol "Run workflow" manual untuk tes
+
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Jalankan bot sinyal
+        env:
+          TWELVE_DATA_KEY: ${{ secrets.TWELVE_DATA_KEY }}
+          TELEGRAM_TOKEN:  ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SYMBOLS: ${{ vars.SYMBOLS }}                 # opsional, default XAU/USD
+          MIN_CONFIDENCE: ${{ vars.MIN_CONFIDENCE }}   # opsional, default 70
+          SEND_WAIT: ${{ vars.SEND_WAIT }}             # opsional, "1" untuk kirim walau no-setup
+        run: python bot.py
