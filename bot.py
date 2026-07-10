@@ -13,7 +13,7 @@ ENV yang dibutuhkan (set sebagai GitHub Secrets / environment):
   MIN_CONFIDENCE    -> opsional, default "70"
   SEND_WAIT         -> opsional "1" untuk kirim pesan walau tidak ada setup (default "0" = diam)
 """
-import os, sys, time, json, urllib.parse, urllib.request
+import os, sys, time, json, urllib.parse, urllib.request, urllib.error
 
 TD_KEY   = os.environ.get("TWELVE_DATA_KEY", "").strip()
 TG_TOKEN = os.environ.get("TELEGRAM_TOKEN", "").strip()
@@ -154,25 +154,26 @@ def analyze(symbol):
 
 def fmt(res):
     s = res["symbol"]
+    reasons = "; ".join(res["reasons"]).replace("<", " di bawah ").replace(">", " di atas ")
     if res["bias"] in ("BUY", "SELL"):
         emo = "🟢" if res["bias"] == "BUY" else "🔴"
         msg = (
-            "%s <b>%s SIGNAL — %s</b>\n"
-            "Harga: <b>%s</b> | Confidence: <b>%s%%</b>\n"
+            "%s %s SIGNAL — %s\n"
+            "Harga: %s | Confidence: %s%%\n"
             "━━━━━━━━━━━━━━\n"
-            "Entry: <b>%s</b>\n"
-            "Stop Loss: <b>%s</b>\n"
-            "Take Profit 1: <b>%s</b>  (+%s%%)\n"
-            "Take Profit 2: <b>%s</b>  (+%s%%)\n"
+            "Entry: %s\n"
+            "Stop Loss: %s\n"
+            "Take Profit 1: %s  (+%s%%)\n"
+            "Take Profit 2: %s  (+%s%%)\n"
             "━━━━━━━━━━━━━━\n"
             "Alasan: %s\n"
             "RSI %s · EMA20 %s · EMA200 %s · ATR %s\n\n"
             "⚠️ Bukan nasihat keuangan. Maks 1%% risiko/trade, hormati Stop Loss."
         ) % (emo, s, res["bias"], res["price"], res["conf"], res["price"],
              res["sl"], res["tp1"], res["tp1pct"], res["tp2"], res["tp2pct"],
-             "; ".join(res["reasons"]), res["rsi"], res["ema20"], res["ema200"], res["atr"])
+             reasons, res["rsi"], res["ema20"], res["ema200"], res["atr"])
     else:
-        msg = ("⏳ <b>%s — BELUM WAKTUNYA ENTRY (No-Trade Zone)</b>\n"
+        msg = ("⏳ %s — BELUM WAKTUNYA ENTRY (No-Trade Zone)\n"
                "Harga %s · konfluensi belum cukup kuat. Sabar, tunggu setup yakin.\n"
                "RSI %s · EMA20 %s · EMA200 %s") % (
                s, res["price"], res["rsi"], res["ema20"], res["ema200"])
@@ -181,12 +182,15 @@ def fmt(res):
 def send_telegram(text):
     url = "https://api.telegram.org/bot%s/sendMessage" % TG_TOKEN
     body = urllib.parse.urlencode({
-        "chat_id": TG_CHAT, "text": text, "parse_mode": "HTML",
+        "chat_id": TG_CHAT, "text": text,
         "disable_web_page_preview": "true"
     }).encode()
     req = urllib.request.Request(url, data=body)
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read().decode())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError("Telegram %s: %s" % (e.code, e.read().decode()))
 
 def main():
     missing = [k for k, v in {"TWELVE_DATA_KEY": TD_KEY, "TELEGRAM_TOKEN": TG_TOKEN,
