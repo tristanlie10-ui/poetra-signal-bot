@@ -18,10 +18,10 @@ import os, sys, time, json, urllib.parse, urllib.request
 TD_KEY   = os.environ.get("TWELVE_DATA_KEY", "").strip()
 TG_TOKEN = os.environ.get("TELEGRAM_TOKEN", "").strip()
 TG_CHAT  = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
-SYMBOLS  = [s.strip() for s in os.environ.get("SYMBOLS", "XAU/USD").split(",") if s.strip()]
-MIN_CONF = float(os.environ.get("MIN_CONFIDENCE", "70"))
-SEND_WAIT = os.environ.get("SEND_WAIT", "0") == "1"
-INTERVAL = os.environ.get("INTERVAL", "15min")   # timeframe utama
+SYMBOLS  = [s.strip() for s in (os.environ.get("SYMBOLS") or "XAU/USD").split(",") if s.strip()]
+MIN_CONF = float(os.environ.get("MIN_CONFIDENCE") or "70")
+SEND_WAIT = (os.environ.get("SEND_WAIT") or "0") == "1"
+INTERVAL = (os.environ.get("INTERVAL") or "15min")   # timeframe utama
 
 def http_get(url):
     req = urllib.request.Request(url, headers={"User-Agent": "poetra-bot"})
