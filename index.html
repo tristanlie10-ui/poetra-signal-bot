@@ -93,15 +93,16 @@ function renderCards(){
   ["M1","M5","M15"].forEach(function(tf){
     var d=(sym&&sym[tf])||{bias:"WAIT"};
     var c=document.createElement("div");c.className="card";c.style.borderTopColor=bcol(d.bias);
-    var rows="";
+    var ubc=d.utbot==="BUY"?"#25e6a8":(d.utbot==="SELL"?"#ff6b85":"#7fa8d6");
+    var rows=d.utbot?('<div class="row"><span class="k">UT Bot</span><span class="v" style="color:'+ubc+'">'+d.utbot+(d.utbot_fresh?' ⚡ '+d.utbot_fresh:'')+'</span></div>'):"";
     if(d.bias==="BUY"||d.bias==="SELL"){
-      rows='<div class="row"><span class="k">Entry</span><span class="v">'+d.entry+'</span></div>'+
+      rows+='<div class="row"><span class="k">Entry</span><span class="v">'+d.entry+'</span></div>'+
            '<div class="row"><span class="k">Stop Loss</span><span class="v v-sl">'+d.sl+'</span></div>'+
            '<div class="row"><span class="k">TP1</span><span class="v v-tp">'+d.tp1+' (+'+d.tp1pct+'%)</span></div>'+
            '<div class="row"><span class="k">TP2</span><span class="v v-tp">'+d.tp2+' (+'+d.tp2pct+'%)</span></div>'+
            '<div class="row"><span class="k">Confidence</span><span class="v">'+d.conf+'%</span></div>';
     } else {
-      rows='<div class="note">Belum ada setup yakin di '+tf+'. Tunggu sinyal (RSI '+(d.rsi||"-")+').</div>';
+      rows+='<div class="note">Bias EMA belum kuat di '+tf+' (RSI '+(d.rsi||"-")+'). Pandu oleh UT Bot di atas.</div>';
     }
     c.innerHTML='<h3><span class="tf">'+tf+'</span><span class="badge '+bcls(d.bias)+'">'+(d.bias||"WAIT")+'</span></h3>'+rows;
     g.appendChild(c);

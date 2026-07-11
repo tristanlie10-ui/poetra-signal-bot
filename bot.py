@@ -80,6 +80,23 @@ def fib_zone(h, l, lookback=60):
         levels = {r: lo + rng * r for r in (0.382, 0.5, 0.618, 0.705, 0.786)}
     return up, hi, lo, levels
 
+def utbot(h, l, c, key=1.0, ap=10):
+    # Replikasi "UT Bot Alerts" (ATR trailing stop). key=sensitivity, ap=ATR period.
+    a = atr(h, l, c, ap); stop = [0.0]*len(c)
+    for i in range(len(c)):
+        nloss = key * a[i]
+        if i == 0:
+            stop[i] = c[i] - nloss; continue
+        prev = stop[i-1]
+        if c[i] > prev and c[i-1] > prev: stop[i] = max(prev, c[i]-nloss)
+        elif c[i] < prev and c[i-1] < prev: stop[i] = min(prev, c[i]+nloss)
+        elif c[i] > prev: stop[i] = c[i]-nloss
+        else: stop[i] = c[i]+nloss
+    fresh_buy  = c[-2] <= stop[-2] and c[-1] > stop[-1]
+    fresh_sell = c[-2] >= stop[-2] and c[-1] < stop[-1]
+    pos = "BUY" if c[-1] > stop[-1] else "SELL"
+    return {"pos": pos, "fresh": ("BUY" if fresh_buy else ("SELL" if fresh_sell else ""))}
+
 def rnd(x, symbol):
     # kripto & harga besar -> 1 desimal; forex -> lebih presisi
     return round(x, 1) if x >= 100 else round(x, 4)
@@ -105,8 +122,9 @@ def analyze(symbol, interval):
     elif trend_dn:
         conf = 35 + (20 if macd_dn else 0) + (20 if rsi_sell else 0) + (25 if in_zone else 0)
         if conf >= MIN_CONF: bias = "SELL"
+    ub = utbot(h, l, c)
     res = {"bias": bias, "conf": int(min(conf, 95)), "price": rnd(px, symbol),
-           "rsi": round(r[-1], 1)}
+           "rsi": round(r[-1], 1), "utbot": ub["pos"], "utbot_fresh": ub["fresh"]}
     if bias == "BUY":
         res.update(entry=rnd(px, symbol), sl=rnd(px-1.6*a[-1], symbol),
                    tp1=rnd(px+1.6*a[-1], symbol), tp2=rnd(px+3.2*a[-1], symbol))
@@ -126,12 +144,14 @@ def fmt_symbol(symbol, tf_res):
         d = tf_res.get(tf, {})
         b = d.get("bias", "WAIT")
         emo = "\U0001F7E2" if b == "BUY" else ("\U0001F534" if b == "SELL" else "⏸️")
+        ubt = d.get("utbot", "-"); ubf = d.get("utbot_fresh", "")
+        ubtxt = "UT Bot: %s%s" % (ubt, (" ⚡FRESH %s" % ubf) if ubf else "")
         if b in ("BUY", "SELL"):
-            lines.append("%s <b>%s %s</b> (conf %s%%)\n   Entry %s | SL %s | TP1 %s (+%s%%) | TP2 %s (+%s%%)" % (
-                emo, tf, b, d.get("conf"), d.get("entry"), d.get("sl"),
+            lines.append("%s <b>%s %s</b> (conf %s%%) · %s\n   Entry %s | SL %s | TP1 %s (+%s%%) | TP2 %s (+%s%%)" % (
+                emo, tf, b, d.get("conf"), ubtxt, d.get("entry"), d.get("sl"),
                 d.get("tp1"), d.get("tp1pct"), d.get("tp2"), d.get("tp2pct")))
         else:
-            lines.append("%s <b>%s WAIT</b> — belum ada setup yakin (RSI %s)" % (emo, tf, d.get("rsi","-")))
+            lines.append("%s <b>%s WAIT</b> · %s (RSI %s)" % (emo, tf, ubtxt, d.get("rsi","-")))
     lines.append("━━━━━━━━━━\nMetode: Fibonacci + EMA/RSI/MACD (high-conviction)")
     lines.append("⚠️ Bukan nasihat keuangan. Maks 1% risiko/trade, hormati Stop Loss.")
     return "\n".join(lines)
