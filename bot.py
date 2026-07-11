@@ -192,11 +192,27 @@ def send_telegram(text):
     except urllib.error.HTTPError as e:
         raise RuntimeError("Telegram %s: %s" % (e.code, e.read().decode()))
 
+def debug_updates():
+    try:
+        data = http_get("https://api.telegram.org/bot%s/getUpdates" % TG_TOKEN)
+        ids = set()
+        for u in data.get("result", []):
+            ch = (u.get("message") or u.get("edited_message") or {}).get("chat", {})
+            if ch.get("id") is not None:
+                ids.add("%s (%s %s)" % (ch.get("id"), ch.get("type"),
+                                        ch.get("username") or ch.get("first_name") or ""))
+        print("[DEBUG] TELEGRAM_CHAT_ID dipakai =", repr(TG_CHAT))
+        print("[DEBUG] Chat yang pernah kirim pesan ke bot ini:",
+              sorted(ids) or "KOSONG -> bot belum di-start / token bot salah")
+    except Exception as e:
+        print("[DEBUG] getUpdates gagal:", e)
+
 def main():
     missing = [k for k, v in {"TWELVE_DATA_KEY": TD_KEY, "TELEGRAM_TOKEN": TG_TOKEN,
                               "TELEGRAM_CHAT_ID": TG_CHAT}.items() if not v]
     if missing:
         print("ENV belum lengkap:", missing); sys.exit(1)
+    send_failed = False
     for sym in SYMBOLS:
         try:
             res = analyze(sym)
@@ -208,8 +224,10 @@ def main():
             elif SEND_WAIT:
                 send_telegram(fmt(res))
         except Exception as e:
-            print("ERROR", sym, e)
+            print("ERROR", sym, e); send_failed = True
         time.sleep(2)  # jaga rate limit
+    if send_failed:
+        debug_updates()
 
 if __name__ == "__main__":
     main()
