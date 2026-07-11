@@ -194,6 +194,12 @@ def send_telegram(text):
 
 def debug_updates():
     try:
+        me = http_get("https://api.telegram.org/bot%s/getMe" % TG_TOKEN)
+        u = me.get("result", {}).get("username")
+        print("[DEBUG] >>> BOT ANDA (dari token) = @%s  <-- buka bot ini di Telegram & tekan START" % u)
+    except Exception as e:
+        print("[DEBUG] getMe gagal (token mungkin salah):", e)
+    try:
         data = http_get("https://api.telegram.org/bot%s/getUpdates" % TG_TOKEN)
         ids = set()
         for u in data.get("result", []):
