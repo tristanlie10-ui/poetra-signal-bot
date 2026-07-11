@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POETRA · AI Trading</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:radial-gradient(900px 500px at 50% -10%,#0d2a4d 0%,#060b16 60%);color:#dce8fb;padding:12px;min-height:100vh;}
@@ -20,8 +21,12 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
 .chip{background:#122a4d;border:1px solid #22406e;color:#bcd4f5;padding:6px 12px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;}
 .chip.active{background:linear-gradient(135deg,#2f8fff,#00e0ff);color:#04101f;border-color:#2f8fff;}
 .glabel{font-size:11px;color:#6f8cba;text-transform:uppercase;}
-.chartwrap{margin-top:10px;background:#0b1730;border:1px solid #1b3157;border-radius:14px;overflow:hidden;height:64vh;min-height:440px;}
-#tvchart{width:100%;height:100%;}
+a.chip{text-decoration:none;}
+.chartwrap{margin-top:10px;background:#0b1730;border:1px solid #1b3157;border-radius:14px;padding:10px;}
+.chead{display:flex;justify-content:space-between;align-items:baseline;padding:2px 6px 8px;}
+.chead .sym{font-weight:800;color:#fff;font-size:15px;}
+.chead .px{font-weight:800;font-size:16px;}
+#chart{width:100%;height:56vh;min-height:360px;}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
 @media(max-width:760px){.grid{grid-template-columns:1fr;}}
 .card{background:#0b1730;border:1px solid #1b3157;border-top-width:4px;border-radius:13px;padding:14px;}
@@ -36,33 +41,35 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
 .foot{font-size:11px;color:#5a729a;text-align:center;margin-top:12px;line-height:1.6;}
 .updated{font-size:11px;color:#7fa8d6;text-align:right;margin-top:6px;}
 .off-dim{opacity:.4;pointer-events:none;filter:grayscale(.3);}
-a.chip{text-decoration:none;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="hdr">
     <div class="brand"><div class="logo">P</div>
-      <div><h1>POETRA · AI TRADING</h1><p>Sinyal M1·M5·M15 · Emas·Kripto·Forex</p></div>
+      <div><h1>POETRA · AI TRADING</h1><p>Chart live + Sinyal M1·M5·M15 + UT Bot</p></div>
     </div>
     <div id="tgl" class="off" onclick="toggleTrade()">TRADING OFF</div>
   </div>
 
   <div class="bar">
     <span class="glabel">Simbol:</span>
-    <button class="chip symbtn active" data-tv="OANDA:XAUUSD" data-key="XAU/USD">XAUUSD</button>
-    <button class="chip symbtn" data-tv="BINANCE:BTCUSDT" data-key="BTC/USD">BTC</button>
-    <button class="chip symbtn" data-tv="BINANCE:ETHUSDT" data-key="ETH/USD">ETH</button>
-    <button class="chip symbtn" data-tv="OANDA:EURUSD" data-key="EUR/USD">EURUSD</button>
-    <span class="glabel" style="margin-left:6px;">TF chart:</span>
-    <button class="chip tfbtn" data-int="1">M1</button>
-    <button class="chip tfbtn" data-int="5">M5</button>
-    <button class="chip tfbtn active" data-int="15">M15</button>
-    <button class="chip tfbtn" data-int="60">H1</button>
-    <a class="chip" href="https://www.tradingview.com/chart/GWhkhFgK/" target="_blank" rel="noopener">🔐 Chart Login (UT Bot)</a>
+    <button class="chip symbtn active" data-bn="PAXGUSDT" data-key="XAU/USD" data-lbl="XAUUSD (Gold)">XAUUSD</button>
+    <button class="chip symbtn" data-bn="BTCUSDT" data-key="BTC/USD" data-lbl="BTCUSDT">BTC</button>
+    <button class="chip symbtn" data-bn="ETHUSDT" data-key="ETH/USD" data-lbl="ETHUSDT">ETH</button>
+    <button class="chip symbtn" data-bn="EURUSDT" data-key="EUR/USD" data-lbl="EURUSDT">EURUSD</button>
+    <span class="glabel" style="margin-left:6px;">TF:</span>
+    <button class="chip tfbtn" data-int="1m">M1</button>
+    <button class="chip tfbtn" data-int="5m">M5</button>
+    <button class="chip tfbtn active" data-int="15m">M15</button>
+    <button class="chip tfbtn" data-int="1h">H1</button>
+    <a class="chip" href="https://www.tradingview.com/chart/GWhkhFgK/" target="_blank" rel="noopener">🔐 Chart Login (UT Bot asli)</a>
   </div>
 
-  <div class="chartwrap" id="chartArea"><div id="tvchart"></div></div>
+  <div class="chartwrap">
+    <div class="chead"><span class="sym" id="chsym">XAUUSD (Gold)</span><span class="px" id="chpx">—</span></div>
+    <div id="chart"></div>
+  </div>
 
   <div id="signalArea">
     <div class="grid" id="cards"></div>
@@ -70,19 +77,37 @@ a.chip{text-decoration:none;}
   </div>
 
   <div class="foot">⚠️ Bukan nasihat keuangan · maks 1% risiko/trade · hormati Stop Loss.<br>
-  Sinyal AI diperbarui otomatis oleh bot cloud (juga dikirim ke Telegram). Chart real-time dari TradingView.</div>
+  Chart live (data Binance, gold via PAXG). Sinyal AI + UT Bot dari bot cloud (juga ke Telegram), auto-refresh.</div>
 </div>
 
-<script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-var ST={tv:"OANDA:XAUUSD",key:"XAU/USD",interval:"15"};
-function buildWidget(){
-  document.getElementById("tvchart").innerHTML="";
-  new TradingView.widget({container_id:"tvchart",autosize:true,symbol:ST.tv,interval:ST.interval,
-    timezone:"Asia/Jakarta",theme:"dark",style:"1",locale:"id",toolbar_bg:"#0b1730",
-    hide_side_toolbar:false,allow_symbol_change:true,withdateranges:true,
-    studies:[{id:"MAExp@tv-basicstudies",inputs:{length:20}},{id:"MAExp@tv-basicstudies",inputs:{length:50}},
-             {id:"MAExp@tv-basicstudies",inputs:{length:200}},{id:"RSI@tv-basicstudies"},{id:"MACD@tv-basicstudies"}]});
+var ST={bn:"PAXGUSDT",key:"XAU/USD",lbl:"XAUUSD (Gold)",int:"15m"};
+var chart,candle,ema20s,ema50s;
+function initChart(){
+  var el=document.getElementById("chart");el.innerHTML="";
+  chart=LightweightCharts.createChart(el,{
+    layout:{background:{color:"#0b1730"},textColor:"#bcd4f5"},
+    grid:{vertLines:{color:"#12233f"},horzLines:{color:"#12233f"}},
+    rightPriceScale:{borderColor:"#1b3157"},timeScale:{borderColor:"#1b3157",timeVisible:true,secondsVisible:false},
+    crosshair:{mode:0},autoSize:true});
+  candle=chart.addCandlestickSeries({upColor:"#16d29a",downColor:"#ff4d6d",borderVisible:false,wickUpColor:"#16d29a",wickDownColor:"#ff4d6d"});
+  ema20s=chart.addLineSeries({color:"#f5c542",lineWidth:2,priceLineVisible:false,lastValueVisible:false});
+  ema50s=chart.addLineSeries({color:"#2f8fff",lineWidth:2,priceLineVisible:false,lastValueVisible:false});
+}
+function ema(vals,n){var k=2/(n+1),out=[],prev=vals[0].value;for(var i=0;i<vals.length;i++){prev=vals[i].value*k+prev*(1-k);out.push({time:vals[i].time,value:prev});}return out;}
+function loadChart(){
+  var url="https://api.binance.com/api/v3/klines?symbol="+ST.bn+"&interval="+ST.int+"&limit=200";
+  fetch(url).then(function(r){return r.json();}).then(function(k){
+    if(!Array.isArray(k)){throw new Error("no data");}
+    var cd=k.map(function(x){return {time:Math.floor(x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4]};});
+    var cl=cd.map(function(x){return {time:x.time,value:x.close};});
+    candle.setData(cd);ema20s.setData(ema(cl,20));ema50s.setData(ema(cl,50));
+    chart.timeScale().fitContent();
+    var last=cd[cd.length-1];
+    document.getElementById("chpx").textContent=last.close.toLocaleString();
+    document.getElementById("chpx").style.color=last.close>=last.open?"#25e6a8":"#ff6b85";
+    document.getElementById("chsym").textContent=ST.lbl;
+  }).catch(function(){document.getElementById("chpx").textContent="data chart tidak tersedia";});
 }
 function bcls(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"b-buy":b.indexOf("SELL")>-1?"b-sell":"b-wait";}
 function bcol(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"#16d29a":b.indexOf("SELL")>-1?"#ff4d6d":"#22406e";}
@@ -94,39 +119,37 @@ function renderCards(){
     var d=(sym&&sym[tf])||{bias:"WAIT"};
     var c=document.createElement("div");c.className="card";c.style.borderTopColor=bcol(d.bias);
     var ubc=d.utbot==="BUY"?"#25e6a8":(d.utbot==="SELL"?"#ff6b85":"#7fa8d6");
-    var rows=d.utbot?('<div class="row"><span class="k">UT Bot</span><span class="v" style="color:'+ubc+'">'+d.utbot+(d.utbot_fresh?' ⚡ '+d.utbot_fresh:'')+'</span></div>'):"";
+    var rows=d.utbot?('<div class="row"><span class="k">UT Bot</span><span class="v" style="color:'+ubc+'">'+d.utbot+'</span></div>'):"";
     if(d.bias==="BUY"||d.bias==="SELL"){
       rows+='<div class="row"><span class="k">Entry</span><span class="v">'+d.entry+'</span></div>'+
-           '<div class="row"><span class="k">Stop Loss</span><span class="v v-sl">'+d.sl+'</span></div>'+
-           '<div class="row"><span class="k">TP1</span><span class="v v-tp">'+d.tp1+' (+'+d.tp1pct+'%)</span></div>'+
-           '<div class="row"><span class="k">TP2</span><span class="v v-tp">'+d.tp2+' (+'+d.tp2pct+'%)</span></div>'+
-           '<div class="row"><span class="k">Confidence</span><span class="v">'+d.conf+'%</span></div>';
+            '<div class="row"><span class="k">Stop Loss</span><span class="v v-sl">'+d.sl+'</span></div>'+
+            '<div class="row"><span class="k">TP1</span><span class="v v-tp">'+d.tp1+' (+'+d.tp1pct+'%)</span></div>'+
+            '<div class="row"><span class="k">TP2</span><span class="v v-tp">'+d.tp2+' (+'+d.tp2pct+'%)</span></div>'+
+            '<div class="row"><span class="k">Confidence</span><span class="v">'+d.conf+'%</span></div>';
     } else {
       rows+='<div class="note">Bias EMA belum kuat di '+tf+' (RSI '+(d.rsi||"-")+'). Pandu oleh UT Bot di atas.</div>';
     }
     c.innerHTML='<h3><span class="tf">'+tf+'</span><span class="badge '+bcls(d.bias)+'">'+(d.bias||"WAIT")+'</span></h3>'+rows;
     g.appendChild(c);
   });
-  document.getElementById("updated").textContent = SIGNALS?("Sinyal diperbarui: "+SIGNALS.updated+" · simbol "+ST.key):"signals.json belum tersedia (tunggu bot jalan).";
+  document.getElementById("updated").textContent=SIGNALS?("Sinyal diperbarui: "+SIGNALS.updated+" · "+ST.key):"signals.json belum tersedia.";
 }
 function loadSignals(){
   fetch("signals.json?_="+Date.now()).then(function(r){return r.json();}).then(function(j){SIGNALS=j;renderCards();})
-  .catch(function(){document.getElementById("updated").textContent="signals.json belum tersedia (tunggu bot jalan pertama kali).";});
+  .catch(function(){document.getElementById("updated").textContent="signals.json belum tersedia (tunggu bot).";});
 }
 document.querySelectorAll(".symbtn").forEach(function(b){b.addEventListener("click",function(){
   document.querySelectorAll(".symbtn").forEach(function(x){x.classList.remove("active");});b.classList.add("active");
-  ST.tv=b.dataset.tv;ST.key=b.dataset.key;buildWidget();renderCards();});});
+  ST.bn=b.dataset.bn;ST.key=b.dataset.key;ST.lbl=b.dataset.lbl;loadChart();renderCards();});});
 document.querySelectorAll(".tfbtn").forEach(function(b){b.addEventListener("click",function(){
-  document.querySelectorAll(".tfbtn").forEach(function(x){x.classList.remove("active");});b.classList.add("active");
-  ST.interval=b.dataset.int;buildWidget();});});
-
-var tradeOn=false;
-function applyTrade(){var t=document.getElementById("tgl");t.textContent=tradeOn?"TRADING ON":"TRADING OFF";
-  t.className=tradeOn?"on":"off";document.getElementById("signalArea").classList.toggle("off-dim",!tradeOn);
-  try{localStorage.setItem("poetra_on",tradeOn?"1":"0");}catch(e){}}
-function toggleTrade(){tradeOn=!tradeOn;applyTrade();}
-(function(){try{tradeOn=(localStorage.getItem("poetra_on")==="1");}catch(e){}applyTrade();
-  buildWidget();loadSignals();setInterval(loadSignals,60000);})();
+  document.querySelectorAll(".tfbtn").forEach(function(x){x.classList.remove("active");});b.classList.add("active");ST.int=b.dataset.int;loadChart();});});
+var on=false;
+function applyTrade(){var t=document.getElementById("tgl");t.textContent=on?"TRADING ON":"TRADING OFF";t.className=on?"on":"off";
+  document.getElementById("signalArea").classList.toggle("off-dim",!on);try{localStorage.setItem("poetra_on",on?"1":"0");}catch(e){}}
+function toggleTrade(){on=!on;applyTrade();}
+(function(){try{on=(localStorage.getItem("poetra_on")==="1");}catch(e){}applyTrade();
+  initChart();loadChart();loadSignals();setInterval(loadChart,30000);setInterval(loadSignals,60000);
+  window.addEventListener("resize",function(){if(chart)chart.timeScale().fitContent();});})();
 </script>
 </body>
 </html>
