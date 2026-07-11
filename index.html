@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POETRA · AI Trading</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:radial-gradient(900px 500px at 50% -10%,#0d2a4d 0%,#060b16 60%);color:#dce8fb;padding:12px;min-height:100vh;}
+.wrap{max-width:1100px;margin:0 auto;}
+.hdr{background:linear-gradient(135deg,#0c1c36,#123a63);border:1px solid #1f4a7d;border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 0 26px rgba(47,143,255,.18);}
+.brand{display:flex;align-items:center;gap:10px;}
+.logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#2f8fff,#00e0ff);display:flex;align-items:center;justify-content:center;font-weight:800;color:#04101f;font-size:20px;}
+.brand h1{font-size:16px;color:#fff;letter-spacing:.5px;}
+.brand p{font-size:11px;color:#7fa8d6;}
+#tgl{cursor:pointer;user-select:none;font-weight:800;font-size:15px;letter-spacing:.5px;padding:8px 18px;border-radius:22px;border:1px solid;transition:.15s;}
+.on{color:#25e6a8;border-color:#16d29a;background:rgba(22,210,154,.14);box-shadow:0 0 14px rgba(22,210,154,.4);}
+.off{color:#ff6b85;border-color:#ff4d6d;background:rgba(255,77,109,.12);}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;background:#0b1730;border:1px solid #1b3157;border-radius:12px;padding:10px 12px;}
+.chip{background:#122a4d;border:1px solid #22406e;color:#bcd4f5;padding:6px 12px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;}
+.chip.active{background:linear-gradient(135deg,#2f8fff,#00e0ff);color:#04101f;border-color:#2f8fff;}
+.glabel{font-size:11px;color:#6f8cba;text-transform:uppercase;}
+.chartwrap{margin-top:10px;background:#0b1730;border:1px solid #1b3157;border-radius:14px;overflow:hidden;height:64vh;min-height:440px;}
+#tvchart{width:100%;height:100%;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
+@media(max-width:760px){.grid{grid-template-columns:1fr;}}
+.card{background:#0b1730;border:1px solid #1b3157;border-top-width:4px;border-radius:13px;padding:14px;}
+.card h3{font-size:14px;display:flex;justify-content:space-between;align-items:center;}
+.tf{color:#00e0ff;font-weight:800;}
+.badge{padding:3px 11px;border-radius:14px;font-size:11px;font-weight:800;}
+.b-buy{background:rgba(22,210,154,.16);color:#25e6a8;}.b-sell{background:rgba(255,77,109,.16);color:#ff6b85;}.b-wait{background:#122a4d;color:#7fa8d6;}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #1b3157;font-size:12.5px;}
+.row:last-child{border-bottom:none;}.k{color:#6f8cba;}.v{font-weight:700;}
+.v-sl{color:#ff6b85;}.v-tp{color:#25e6a8;}
+.note{font-size:11px;color:#6f8cba;margin-top:8px;}
+.foot{font-size:11px;color:#5a729a;text-align:center;margin-top:12px;line-height:1.6;}
+.updated{font-size:11px;color:#7fa8d6;text-align:right;margin-top:6px;}
+.off-dim{opacity:.4;pointer-events:none;filter:grayscale(.3);}
+a.chip{text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div class="brand"><div class="logo">P</div>
+      <div><h1>POETRA · AI TRADING</h1><p>Sinyal M1·M5·M15 · Emas·Kripto·Forex</p></div>
+    </div>
+    <div id="tgl" class="off" onclick="toggleTrade()">TRADING OFF</div>
+  </div>
+
+  <div class="bar">
+    <span class="glabel">Simbol:</span>
+    <button class="chip symbtn active" data-tv="OANDA:XAUUSD" data-key="XAU/USD">XAUUSD</button>
+    <button class="chip symbtn" data-tv="BINANCE:BTCUSDT" data-key="BTC/USD">BTC</button>
+    <button class="chip symbtn" data-tv="BINANCE:ETHUSDT" data-key="ETH/USD">ETH</button>
+    <button class="chip symbtn" data-tv="OANDA:EURUSD" data-key="EUR/USD">EURUSD</button>
+    <span class="glabel" style="margin-left:6px;">TF chart:</span>
+    <button class="chip tfbtn" data-int="1">M1</button>
+    <button class="chip tfbtn" data-int="5">M5</button>
+    <button class="chip tfbtn active" data-int="15">M15</button>
+    <button class="chip tfbtn" data-int="60">H1</button>
+    <a class="chip" href="https://www.tradingview.com/chart/GWhkhFgK/" target="_blank" rel="noopener">🔐 Chart Login (UT Bot)</a>
+  </div>
+
+  <div class="chartwrap" id="chartArea"><div id="tvchart"></div></div>
+
+  <div id="signalArea">
+    <div class="grid" id="cards"></div>
+    <div class="updated" id="updated">Memuat sinyal…</div>
+  </div>
+
+  <div class="foot">⚠️ Bukan nasihat keuangan · maks 1% risiko/trade · hormati Stop Loss.<br>
+  Sinyal AI diperbarui otomatis oleh bot cloud (juga dikirim ke Telegram). Chart real-time dari TradingView.</div>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+var ST={tv:"OANDA:XAUUSD",key:"XAU/USD",interval:"15"};
+function buildWidget(){
+  document.getElementById("tvchart").innerHTML="";
+  new TradingView.widget({container_id:"tvchart",autosize:true,symbol:ST.tv,interval:ST.interval,
+    timezone:"Asia/Jakarta",theme:"dark",style:"1",locale:"id",toolbar_bg:"#0b1730",
+    hide_side_toolbar:false,allow_symbol_change:true,withdateranges:true,
+    studies:[{id:"MAExp@tv-basicstudies",inputs:{length:20}},{id:"MAExp@tv-basicstudies",inputs:{length:50}},
+             {id:"MAExp@tv-basicstudies",inputs:{length:200}},{id:"RSI@tv-basicstudies"},{id:"MACD@tv-basicstudies"}]});
+}
+function bcls(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"b-buy":b.indexOf("SELL")>-1?"b-sell":"b-wait";}
+function bcol(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"#16d29a":b.indexOf("SELL")>-1?"#ff4d6d":"#22406e";}
+var SIGNALS=null;
+function renderCards(){
+  var g=document.getElementById("cards");g.innerHTML="";
+  var sym=(SIGNALS&&SIGNALS.symbols&&SIGNALS.symbols[ST.key])||null;
+  ["M1","M5","M15"].forEach(function(tf){
+    var d=(sym&&sym[tf])||{bias:"WAIT"};
+    var c=document.createElement("div");c.className="card";c.style.borderTopColor=bcol(d.bias);
+    var rows="";
+    if(d.bias==="BUY"||d.bias==="SELL"){
+      rows='<div class="row"><span class="k">Entry</span><span class="v">'+d.entry+'</span></div>'+
+           '<div class="row"><span class="k">Stop Loss</span><span class="v v-sl">'+d.sl+'</span></div>'+
+           '<div class="row"><span class="k">TP1</span><span class="v v-tp">'+d.tp1+' (+'+d.tp1pct+'%)</span></div>'+
+           '<div class="row"><span class="k">TP2</span><span class="v v-tp">'+d.tp2+' (+'+d.tp2pct+'%)</span></div>'+
+           '<div class="row"><span class="k">Confidence</span><span class="v">'+d.conf+'%</span></div>';
+    } else {
+      rows='<div class="note">Belum ada setup yakin di '+tf+'. Tunggu sinyal (RSI '+(d.rsi||"-")+').</div>';
+    }
+    c.innerHTML='<h3><span class="tf">'+tf+'</span><span class="badge '+bcls(d.bias)+'">'+(d.bias||"WAIT")+'</span></h3>'+rows;
+    g.appendChild(c);
+  });
+  document.getElementById("updated").textContent = SIGNALS?("Sinyal diperbarui: "+SIGNALS.updated+" · simbol "+ST.key):"signals.json belum tersedia (tunggu bot jalan).";
+}
+function loadSignals(){
+  fetch("signals.json?_="+Date.now()).then(function(r){return r.json();}).then(function(j){SIGNALS=j;renderCards();})
+  .catch(function(){document.getElementById("updated").textContent="signals.json belum tersedia (tunggu bot jalan pertama kali).";});
+}
+document.querySelectorAll(".symbtn").forEach(function(b){b.addEventListener("click",function(){
+  document.querySelectorAll(".symbtn").forEach(function(x){x.classList.remove("active");});b.classList.add("active");
+  ST.tv=b.dataset.tv;ST.key=b.dataset.key;buildWidget();renderCards();});});
+document.querySelectorAll(".tfbtn").forEach(function(b){b.addEventListener("click",function(){
+  document.querySelectorAll(".tfbtn").forEach(function(x){x.classList.remove("active");});b.classList.add("active");
+  ST.interval=b.dataset.int;buildWidget();});});
+
+var tradeOn=false;
+function applyTrade(){var t=document.getElementById("tgl");t.textContent=tradeOn?"TRADING ON":"TRADING OFF";
+  t.className=tradeOn?"on":"off";document.getElementById("signalArea").classList.toggle("off-dim",!tradeOn);
+  try{localStorage.setItem("poetra_on",tradeOn?"1":"0");}catch(e){}}
+function toggleTrade(){tradeOn=!tradeOn;applyTrade();}
+(function(){try{tradeOn=(localStorage.getItem("poetra_on")==="1");}catch(e){}applyTrade();
+  buildWidget();loadSignals();setInterval(loadSignals,60000);})();
+</script>
+</body>
+</html>
