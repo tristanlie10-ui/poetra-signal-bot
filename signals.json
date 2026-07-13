@@ -1,74 +1,68 @@
 {
-  "updated": "2026-07-11 07:53 UTC",
+  "updated": "2026-07-13 09:24 UTC",
   "symbols": {
     "XAU/USD": {
       "M1": {
-        "bias": "WAIT",
-        "conf": 0,
-        "price": 4111.5,
-        "rsi": 51.7,
-        "utbot": "BUY",
-        "utbot_fresh": ""
-      },
-      "M5": {
         "bias": "BUY",
         "conf": 95,
-        "price": 4111.5,
-        "rsi": 52.8,
-        "utbot": "SELL",
+        "price": 4075.4,
+        "rsi": 54.7,
+        "utbot": "BUY",
         "utbot_fresh": "",
-        "entry": 4111.5,
-        "sl": 4111.2,
-        "tp1": 4111.8,
-        "tp2": 4112.2,
-        "tp1pct": 0.01,
-        "tp2pct": 0.02
+        "entry": 4075.4,
+        "sl": 4073.0,
+        "tp1": 4077.7,
+        "tp2": 4080.1,
+        "tp1pct": 0.06,
+        "tp2pct": 0.12
+      },
+      "M5": {
+        "bias": "WAIT",
+        "conf": 0,
+        "price": 4075.4,
+        "rsi": 60.6,
+        "utbot": "SELL",
+        "utbot_fresh": ""
       },
       "M15": {
-        "bias": "BUY",
-        "conf": 80,
-        "price": 4111.5,
-        "rsi": 54.2,
-        "utbot": "SELL",
-        "utbot_fresh": "",
-        "entry": 4111.5,
-        "sl": 4110.7,
-        "tp1": 4112.3,
-        "tp2": 4113.1,
-        "tp1pct": 0.02,
-        "tp2pct": 0.04
+        "bias": "WAIT",
+        "conf": 35,
+        "price": 4075.4,
+        "rsi": 57.7,
+        "utbot": "BUY",
+        "utbot_fresh": ""
       }
     },
     "BTC/USD": {
       "M1": {
         "bias": "WAIT",
-        "conf": 55,
-        "price": 64113.2,
-        "rsi": 37.5,
+        "conf": 60,
+        "price": 63057.6,
+        "rsi": 44.4,
         "utbot": "SELL",
         "utbot_fresh": ""
       },
       "M5": {
         "bias": "WAIT",
-        "conf": 60,
-        "price": 64113.2,
-        "rsi": 42.8,
+        "conf": 0,
+        "price": 63057.6,
+        "rsi": 57.2,
         "utbot": "SELL",
         "utbot_fresh": ""
       },
       "M15": {
-        "bias": "BUY",
+        "bias": "SELL",
         "conf": 80,
-        "price": 64113.2,
-        "rsi": 49.9,
+        "price": 63057.6,
+        "rsi": 51.4,
         "utbot": "BUY",
         "utbot_fresh": "",
-        "entry": 64113.2,
-        "sl": 63989.8,
-        "tp1": 64236.7,
-        "tp2": 64360.2,
-        "tp1pct": 0.19,
-        "tp2pct": 0.39
+        "entry": 63057.6,
+        "sl": 63311.1,
+        "tp1": 62804.1,
+        "tp2": 62550.6,
+        "tp1pct": 0.4,
+        "tp2pct": 0.8
       }
     }
   }
