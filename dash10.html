@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POETRA AI Trading</title>
+<script src="https://s3.tradingview.com/tv.js"></script>
+<style>
+:root{color-scheme:dark;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:radial-gradient(900px 500px at 50% -10%,#0d2a4d 0%,#060b16 60%);color:#dce8fb;padding:16px;min-height:100vh;}
+.wrap{max-width:1080px;margin:0 auto;}
+.hdr{background:linear-gradient(135deg,#0c1c36,#123a63);border:1px solid #1f4a7d;border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 0 26px rgba(47,143,255,.18);}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#2f8fff,#00e0ff);display:flex;align-items:center;justify-content:center;font-weight:800;color:#04101f;font-size:20px;}
+.brand h1{font-size:17px;color:#fff;letter-spacing:.5px;}
+.brand p{font-size:12px;color:#7fa8d6;}
+#tgl{cursor:pointer;user-select:none;font-weight:800;font-size:15px;letter-spacing:.5px;padding:9px 22px;border-radius:24px;border:1px solid;transition:.15s;}
+.on{color:#25e6a8;border-color:#16d29a;background:rgba(22,210,154,.14);box-shadow:0 0 14px rgba(22,210,154,.4);}
+.off{color:#ff6b85;border-color:#ff4d6d;background:rgba(255,77,109,.12);}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#0b1730;border:1px solid #1b3157;border-radius:14px;padding:12px 16px;margin-top:12px;}
+.glabel{font-size:11px;color:#6f8cba;text-transform:uppercase;}
+.chip{background:#122a4d;border:1px solid #22406e;color:#bcd4f5;padding:7px 12px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;}
+.chip.active{background:linear-gradient(135deg,#2f8fff,#00e0ff);color:#04101f;border-color:#2f8fff;}
+.clock{margin-left:auto;font-size:12px;font-weight:700;color:#25e6a8;}
+.banner{margin-top:12px;border-radius:12px;padding:12px 16px;font-size:13.5px;font-weight:600;border:1px solid #1b3157;background:#0b1730;color:#9dbdf0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.banner.buy{border-color:#16d29a;background:rgba(22,210,154,.1);color:#8ef2cf;box-shadow:0 0 16px rgba(22,210,154,.22);}
+.banner.sell{border-color:#ff4d6d;background:rgba(255,77,109,.1);color:#ffb3c1;box-shadow:0 0 16px rgba(255,77,109,.2);}
+.meter{height:8px;border-radius:5px;background:#12203a;overflow:hidden;min-width:110px;flex:1 1 110px;max-width:200px;}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,#2f8fff,#25e6a8);}
+.panel{background:#000000;border:1px solid #1b3157;border-radius:14px;padding:10px;margin-top:12px;}
+#tvchart{width:100%;height:460px;}
+@media(max-width:760px){#tvchart{height:360px;}}
+.stats{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#8aa0c0;padding:6px 6px 2px;}
+.stats b{color:#dce8fb;font-weight:700;}
+.up{color:#25e6a8;}.down{color:#ff6b85;}
+.btns{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.btn{flex:1 1 220px;border:none;border-radius:12px;padding:13px 16px;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-cyan{background:linear-gradient(135deg,#2f8fff,#00e0ff);color:#04101f;}
+.btn-out{background:#0b1730;border:1px solid #2f8fff;color:#bcd4f5;}
+.btn.busy{opacity:.6;pointer-events:none;}
+.btn .ic{display:inline-block;}
+.btn.busy .ic{animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+@media(max-width:760px){.grid{grid-template-columns:1fr;}}
+.card{background:#0b1730;border:1px solid #1b3157;border-top-width:4px;border-radius:14px;padding:16px;}
+.card h3{font-size:15px;display:flex;justify-content:space-between;align-items:center;}
+.tf{color:#00e0ff;font-weight:800;}
+.badge{padding:4px 12px;border-radius:16px;font-size:12px;font-weight:800;}
+.b-buy{background:rgba(22,210,154,.16);color:#25e6a8;}.b-sell{background:rgba(255,77,109,.16);color:#ff6b85;}.b-wait{background:#122a4d;color:#7fa8d6;}
+.row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #1b3157;font-size:13px;}
+.row:last-child{border-bottom:none;}.k{color:#6f8cba;}.v{font-weight:700;}
+.v-sl{color:#ff6b85;}.v-tp{color:#25e6a8;}
+.dir-bull{color:#25e6a8;font-weight:800;}.dir-bear{color:#ff6b85;font-weight:800;}.dir-rng{color:#7fa8d6;font-weight:800;}
+.note{font-size:11.5px;color:#6f8cba;margin-top:8px;line-height:1.5;}
+.fresh{font-size:10px;font-weight:800;color:#04101f;background:#ffd15c;padding:1px 6px;border-radius:6px;margin-left:6px;}
+.disc{background:rgba(47,143,255,.08);border:1px solid #1f4a7d;border-radius:12px;padding:12px 16px;margin-top:16px;font-size:11.5px;color:#9dbdf0;line-height:1.6;}
+.foot{text-align:center;font-size:11px;color:#5a729a;margin-top:12px;}
+.off-dim{opacity:.4;pointer-events:none;filter:grayscale(.3);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div class="brand"><div class="logo">P</div>
+      <div><h1>POETRA · AI TRADING</h1><p>TradingView + Fibonacci · analisa entry pro</p></div>
+    </div>
+    <div id="tgl" class="off" onclick="toggleTrade()">TRADING OFF</div>
+  </div>
+
+  <div class="bar">
+    <span class="glabel">Simbol:</span>
+    <button class="chip symbtn active" data-tv="OANDA:XAUUSD" data-bn="PAXGUSDT" data-name="XAUUSD" data-dig="2">XAUUSD</button>
+    <button class="chip symbtn" data-tv="BINANCE:BTCUSDT" data-bn="BTCUSDT" data-name="BTC" data-dig="1">BTC</button>
+    <button class="chip symbtn" data-tv="BINANCE:ETHUSDT" data-bn="ETHUSDT" data-name="ETH" data-dig="2">ETH</button>
+    <button class="chip symbtn" data-tv="BINANCE:SOLUSDT" data-bn="SOLUSDT" data-name="SOL" data-dig="2">SOL</button>
+    <button class="chip symbtn" data-tv="BINANCE:BNBUSDT" data-bn="BNBUSDT" data-name="BNB" data-dig="2">BNB</button>
+    <span class="glabel" style="margin-left:8px;">TF:</span>
+    <button class="chip tfbtn" data-i="1m" data-tv="1">M1</button>
+    <button class="chip tfbtn" data-i="5m" data-tv="5">M5</button>
+    <button class="chip tfbtn active" data-i="15m" data-tv="15">M15</button>
+    <button class="chip tfbtn" data-i="1h" data-tv="60">H1</button>
+    <span class="clock" id="clock">●  --:--:--</span>
+  </div>
+
+  <div class="banner" id="banner">Menyiapkan analisa…</div>
+
+  <div class="panel">
+    <div class="stats" id="stats"></div>
+    <div id="tvchart"></div>
+  </div>
+
+  <div class="btns">
+    <button class="btn btn-cyan" id="ref1" onclick="screenNow()"><span class="ic">🔄</span> Refresh Sinyal Live</button>
+    <a class="btn btn-out" href="https://www.tradingview.com/chart/GWhkhFgK/" target="_blank" rel="noopener">🔐 Chart Login (UT Bot asli)</a>
+    <button class="btn btn-out" id="ref2" onclick="screenNow()">🤖 Minta Analisa Baru</button>
+  </div>
+
+  <div id="signalArea"><div class="grid" id="cards"></div></div>
+
+  <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> Maks 1% risiko/trade, hormati Stop Loss. Chart = <b>TradingView asli</b> (candle & harga sama persis, indikator lengkap, bisa ganti simbol/timeframe di chart). Sinyal AI di bawah dihitung terpisah dengan <b>Fibonacci retracement + arah tren (bullish/bearish) + UT Bot + EMA/RSI/MACD</b>, dan <b>hanya keluar bila benar-benar yakin</b> (confidence ≥ 80%, harga di golden zone Fibo). Harga XAU dikalibrasi ke emas spot.</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v3.0 PRO (terkunci)</div>
+</div>
+
+<script>
+/* ================= indikator ================= */
+function ema(s,n){var k=2/(n+1),o=[],p=s[0];for(var i=0;i<s.length;i++){p=s[i]*k+p*(1-k);o.push(p);}return o;}
+function rsiArr(s,n){n=n||14;var g=[0],l=[0];for(var i=1;i<s.length;i++){var d=s[i]-s[i-1];g.push(Math.max(d,0));l.push(Math.max(-d,0));}
+  var ag=0,al=0;for(var i=1;i<=n;i++){ag+=g[i]||0;al+=l[i]||0;}ag/=n;al/=n;var o=new Array(s.length).fill(50);
+  for(var i=n+1;i<s.length;i++){ag=(ag*(n-1)+g[i])/n;al=(al*(n-1)+l[i])/n;var rs=al!==0?ag/al:999;o[i]=100-100/(1+rs);}return o;}
+function macdHist(s){var ef=ema(s,12),es=ema(s,26),line=ef.map(function(v,i){return v-es[i];});var sig=ema(line,9);return line.map(function(v,i){return v-sig[i];});}
+function atr(h,l,c,n){n=n||14;var t=[h[0]-l[0]];for(var i=1;i<c.length;i++){t.push(Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])));}
+  var o=new Array(c.length).fill(t[0]);var a=0;for(var i=0;i<n;i++)a+=t[i];a/=n;for(var i=n;i<c.length;i++){a=(a*(n-1)+t[i])/n;o[i]=a;}return o;}
+function swingFib(h,l,lb){lb=lb||80;var sh=h.slice(-lb),sl=l.slice(-lb);
+  var hi=Math.max.apply(null,sh),lo=Math.min.apply(null,sl);
+  var up=sl.lastIndexOf(lo)<sh.lastIndexOf(hi);var rng=hi>lo?hi-lo:1e-9;
+  function f(r){return up?hi-rng*r:lo+rng*r;}
+  return {up:up,hi:hi,lo:lo,rng:rng,l618:f(0.618),l705:f(0.705)};}
+function utStops(h,l,c,key,ap){key=key||1;ap=ap||10;var a=atr(h,l,c,ap);var st=new Array(c.length).fill(0);
+  for(var i=0;i<c.length;i++){var nl=key*a[i];if(i===0){st[i]=c[i]-nl;continue;}var pv=st[i-1];
+    if(c[i]>pv&&c[i-1]>pv)st[i]=Math.max(pv,c[i]-nl);else if(c[i]<pv&&c[i-1]<pv)st[i]=Math.min(pv,c[i]+nl);
+    else if(c[i]>pv)st[i]=c[i]-nl;else st[i]=c[i]+nl;}return st;}
+function utbot(h,l,c){var st=utStops(h,l,c);var n=c.length;
+  var fb=c[n-2]<=st[n-2]&&c[n-1]>st[n-1];var fs=c[n-2]>=st[n-2]&&c[n-1]<st[n-1];
+  return {pos:c[n-1]>st[n-1]?"BUY":"SELL", fresh:fb?"BUY":(fs?"SELL":"")};}
+
+/* analisa entry: Fibonacci + arah tren + UT Bot + EMA/RSI/MACD (high-conviction) */
+function analyze(h,l,c){
+  if(!c||c.length<80)return {bias:"WAIT",conf:0,rsi:"-",utbot:"-",dir:"RANGING"};
+  var i=c.length-1,px=c[i];
+  var e20=ema(c,20),e50=ema(c,50),e200=ema(c,200),r=rsiArr(c,14),mh=macdHist(c),a=atr(h,l,c,14);
+  var sf=swingFib(h,l,80),ub=utbot(h,l,c);
+  var gzLo=Math.min(sf.l618,sf.l705),gzHi=Math.max(sf.l618,sf.l705);
+  var inGold=px>=gzLo-a[i]*0.6 && px<=gzHi+a[i]*0.6;
+  var bull=px>e200[i]&&e20[i]>e50[i], bear=px<e200[i]&&e20[i]<e50[i];
+  var dir=bull?"BULLISH":(bear?"BEARISH":"RANGING");
+  var mUp=mh[i]>0&&mh[i]>mh[i-1], mDn=mh[i]<0&&mh[i]<mh[i-1];
+  var rBuy=r[i]>=45&&r[i]<=68, rSell=r[i]>=32&&r[i]<=55;
+  var bias="WAIT",conf=0,MIN=80;
+  /* WAJIB: arah tren + UT Bot searah + harga di golden zone Fibo */
+  if(bull&&ub.pos==="BUY"&&inGold){conf=45+(mUp?20:0)+(rBuy?15:0)+(ub.fresh==="BUY"?10:0);if(conf>=MIN)bias="BUY";}
+  else if(bear&&ub.pos==="SELL"&&inGold){conf=45+(mDn?20:0)+(rSell?15:0)+(ub.fresh==="SELL"?10:0);if(conf>=MIN)bias="SELL";}
+  var res={bias:bias,conf:Math.min(conf,97)|0,price:px,rsi:Math.round(r[i]*10)/10,utbot:ub.pos,utbot_fresh:ub.fresh,
+           dir:dir,gzLo:gzLo,gzHi:gzHi};
+  if(bias==="BUY"){res.entry=px;res.sl=Math.min(px-1.5*a[i],gzLo-0.3*a[i]);res.tp1=sf.hi;res.tp2=sf.hi+0.618*sf.rng;}
+  else if(bias==="SELL"){res.entry=px;res.sl=Math.max(px+1.5*a[i],gzHi+0.3*a[i]);res.tp1=sf.lo;res.tp2=sf.lo-0.618*sf.rng;}
+  if(res.entry!==undefined){res.tp1pct=Math.round(Math.abs(res.tp1-res.entry)/res.entry*10000)/100;res.tp2pct=Math.round(Math.abs(res.tp2-res.entry)/res.entry*10000)/100;
+    res.rr=Math.round(Math.abs(res.tp1-res.entry)/Math.abs(res.entry-res.sl)*10)/10;}
+  return res;
+}
+
+/* ================= data ================= */
+var HOSTS=["https://api.binance.com","https://data-api.binance.vision","https://api-gcp.binance.com","https://api1.binance.com","https://api2.binance.com","https://api3.binance.com"];
+async function bfetch(path){
+  for(var i=0;i<HOSTS.length;i++){
+    try{var ctl=("AbortController" in window)?new AbortController():null;var to=ctl?setTimeout(function(){ctl.abort();},7000):null;
+      var r=await fetch(HOSTS[i]+path, ctl?{signal:ctl.signal}:{});if(to)clearTimeout(to);
+      if(r&&r.ok){var j=await r.json();if(j){if(i>0){HOSTS.unshift(HOSTS.splice(i,1)[0]);}return j;}}
+    }catch(e){}}
+  throw new Error("all-hosts-failed");
+}
+var GSPOT=null,GSPOT_T=0,GOFF=0;
+async function goldSpot(){if(GSPOT&&(Date.now()-GSPOT_T)<40000)return GSPOT;
+  try{var r=await fetch("https://api.gold-api.com/price/XAU");if(r.ok){var j=await r.json();if(j&&j.price){GSPOT=+j.price;GSPOT_T=Date.now();}}}catch(e){}return GSPOT;}
+/* offset STABIL: dihitung dari spot vs paxg pada saat bersamaan, lalu dipakai konstan -> harga tetap bergerak */
+async function refreshGoldOffset(){try{var sp=await goldSpot();if(!sp)return;var r=await bfetch("/api/v3/ticker/price?symbol=PAXGUSDT");var p=+r.price;if(p)GOFF=sp-p;}catch(e){}}
+async function klines(sym,intv,lim){
+  var d=await bfetch("/api/v3/klines?symbol="+sym+"&interval="+intv+"&limit="+(lim||300));
+  var o={t:d.map(function(k){return Math.floor(k[0]/1000);}),o:d.map(function(k){return +k[1];}),
+         h:d.map(function(k){return +k[2];}),l:d.map(function(k){return +k[3];}),c:d.map(function(k){return +k[4];})};
+  if(sym==="PAXGUSDT"&&GOFF){for(var i=0;i<o.c.length;i++){o.o[i]+=GOFF;o.h[i]+=GOFF;o.l[i]+=GOFF;o.c[i]+=GOFF;}}
+  return o;
+}
+async function stat24(sym){var d=await bfetch("/api/v3/ticker/24hr?symbol="+sym);
+  var out={chg:+d.priceChangePercent,high:+d.highPrice,low:+d.lowPrice,last:+d.lastPrice};
+  if(sym==="PAXGUSDT"&&GOFF){out.high+=GOFF;out.low+=GOFF;out.last+=GOFF;}return out;}
+
+/* ================= state ================= */
+var SYM="PAXGUSDT",SNAME="XAUUSD",DIG=2,TF="15m",TVSYM="OANDA:XAUUSD",TVINT="15",on=false;
+var lastGood=0,tfSec=900,TFSECS={"1m":60,"5m":300,"15m":900,"1h":3600};
+function fmt(x){return (x==null||isNaN(x))?"—":Number(x).toLocaleString("en-US",{minimumFractionDigits:DIG,maximumFractionDigits:DIG});}
+function bcls(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"b-buy":b.indexOf("SELL")>-1?"b-sell":"b-wait";}
+function bcol(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"#16d29a":b.indexOf("SELL")>-1?"#ff4d6d":"#22406e";}
+function dcls(d){return d==="BULLISH"?"dir-bull":(d==="BEARISH"?"dir-bear":"dir-rng");}
+var TFS=[["M1","1m"],["M5","5m"],["M15","15m"]];
+function pad(n){return (n<10?"0":"")+n;}
+function updateClock(){var now=new Date();var t=pad(now.getHours())+":"+pad(now.getMinutes())+":"+pad(now.getSeconds());
+  var fresh=(Date.now()-lastGood)<40000;var cd="";if(fresh){var rem=tfSec-(Math.floor(Date.now()/1000)%tfSec);cd="  · candle "+pad(Math.floor(rem/60))+":"+pad(rem%60);}
+  var e=document.getElementById("clock");if(e){e.textContent=(fresh?"● LIVE ":"● menyambung… ")+t+cd;e.style.color=fresh?"#25e6a8":"#ff6b85";}}
+
+/* ================= TradingView chart ================= */
+function loadTV(){var el=document.getElementById("tvchart");if(!el)return;el.innerHTML="";
+  try{new TradingView.widget({autosize:true,symbol:TVSYM,interval:TVINT,timezone:"Asia/Jakarta",theme:"dark",style:"1",
+    locale:"id",toolbar_bg:"#000000",enable_publishing:false,hide_side_toolbar:false,allow_symbol_change:true,withdateranges:true,
+    details:false,studies:["MAExp@tv-basicstudies","RSI@tv-basicstudies","MACD@tv-basicstudies"],container_id:"tvchart"});
+  }catch(e){el.innerHTML='<div style="padding:24px;color:#9dbdf0;text-align:center">Chart TradingView tidak bisa dimuat di browser ini. <a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(TVSYM)+'" target="_blank" style="color:#00e0ff">Buka di TradingView →</a></div>';}}
+async function loadStats(){try{var s=await stat24(SYM);var cls=s.chg>=0?"up":"down";var sign=s.chg>=0?"+":"";
+  document.getElementById("stats").innerHTML=SNAME+' · 24h: <b class="'+cls+'">'+sign+s.chg.toFixed(2)+'%</b> · H: <b>'+fmt(s.high)+'</b> · L: <b>'+fmt(s.low)+'</b> · Harga acuan: <b>'+fmt(s.last)+'</b>';
+  lastGood=Date.now();}catch(e){}}
+
+/* ================= signals ================= */
+function setBanner(best){var b=document.getElementById("banner");
+  if(best){b.className="banner "+(best.bias==="BUY"?"buy":"sell");
+    b.innerHTML='<span>🎯 SETUP YAKIN: <b>'+SNAME+' '+best.tf+' '+best.bias+'</b> ('+best.dir+') · Entry '+fmt(best.entry)+' | SL '+fmt(best.sl)+' | TP1 '+fmt(best.tp1)+' · RR '+best.rr+'</span>'+
+      '<span style="display:flex;align-items:center;gap:8px;white-space:nowrap">conf '+best.conf+'% <span class="meter"><i style="width:'+best.conf+'%"></i></span></span>';
+  }else{b.className="banner";b.innerHTML='<span>⏸️ Belum ada setup yang cukup yakin — <b>WAIT</b>. Menunggu harga masuk golden zone Fibonacci + konfirmasi tren. Jangan paksa entry.</span>';}}
+async function screenNow(){
+  var b1=document.getElementById("ref1"),b2=document.getElementById("ref2");b1.classList.add("busy");b2.classList.add("busy");
+  await loadStats();
+  var g=document.getElementById("cards");var best=null;
+  for(var k=0;k<TFS.length;k++){
+    var tf=TFS[k][0],res;
+    try{var d=await klines(SYM,TFS[k][1],300);res=analyze(d.h,d.l,d.c);}
+    catch(e){res={bias:"WAIT",conf:0,rsi:"-",utbot:"-",dir:"RANGING"};}
+    var card=g.children[k];if(!card){card=document.createElement("div");card.className="card";g.appendChild(card);}
+    card.style.borderTopColor=bcol(res.bias);
+    var ubc=res.utbot==="BUY"?"#25e6a8":(res.utbot==="SELL"?"#ff6b85":"#7fa8d6");
+    var frTag=res.utbot_fresh?'<span class="fresh">⚡FRESH '+res.utbot_fresh+'</span>':'';
+    var arrow=res.dir==="BULLISH"?"▲":(res.dir==="BEARISH"?"▼":"■");
+    var rows='<div class="row"><span class="k">Arah (Fibo)</span><span class="'+dcls(res.dir)+'">'+arrow+' '+res.dir+'</span></div>'+
+             '<div class="row"><span class="k">Golden Zone</span><span class="v">'+fmt(res.gzLo)+' – '+fmt(res.gzHi)+'</span></div>'+
+             '<div class="row"><span class="k">UT Bot</span><span class="v" style="color:'+ubc+'">'+(res.utbot||"-")+frTag+'</span></div>';
+    if(res.bias==="BUY"||res.bias==="SELL"){
+      rows+='<div class="row"><span class="k">Entry</span><span class="v">'+fmt(res.entry)+'</span></div>'+
+            '<div class="row"><span class="k">Stop Loss</span><span class="v v-sl">'+fmt(res.sl)+'</span></div>'+
+            '<div class="row"><span class="k">TP1</span><span class="v v-tp">'+fmt(res.tp1)+' (+'+res.tp1pct+'%)</span></div>'+
+            '<div class="row"><span class="k">TP2</span><span class="v v-tp">'+fmt(res.tp2)+' (+'+res.tp2pct+'%)</span></div>'+
+            '<div class="row"><span class="k">R:R / Conf</span><span class="v">'+res.rr+' · '+res.conf+'%</span></div>';
+      if(!best||res.conf>best.conf)best={tf:tf,bias:res.bias,conf:res.conf,entry:res.entry,sl:res.sl,tp1:res.tp1,dir:res.dir,rr:res.rr};
+    }else{
+      rows+='<div class="note">Belum yakin (RSI '+(res.rsi||"-")+'). Butuh: tren '+res.dir+' + UT Bot searah + harga di golden zone Fibo. WAIT.</div>';
+    }
+    card.innerHTML='<h3><span class="tf">'+tf+'</span><span class="badge '+bcls(res.bias)+'">'+(res.bias||"WAIT")+'</span></h3>'+rows;
+  }
+  setBanner(best);b1.classList.remove("busy");b2.classList.remove("busy");
+}
+
+/* ================= controls ================= */
+document.querySelectorAll(".symbtn").forEach(function(b){b.addEventListener("click",function(){
+  document.querySelectorAll(".symbtn").forEach(function(x){x.classList.remove("active");});b.classList.add("active");
+  SYM=b.dataset.bn;SNAME=b.dataset.name;DIG=+b.dataset.dig;TVSYM=b.dataset.tv;
+  loadTV();if(SYM==="PAXGUSDT"){refreshGoldOffset().then(screenNow);}else{screenNow();}});});
+document.querySelectorAll(".tfbtn").forEach(function(b){b.addEventListener("click",function(){
+  document.querySelectorAll(".tfbtn").forEach(function(x){x.classList.remove("active");});b.classList.add("active");
+  TF=b.dataset.i;TVINT=b.dataset.tv;tfSec=TFSECS[TF]||900;loadTV();screenNow();});});
+
+function applyTrade(){var t=document.getElementById("tgl");t.textContent=on?"TRADING ON":"TRADING OFF";t.className=on?"on":"off";
+  document.getElementById("signalArea").classList.toggle("off-dim",!on);document.getElementById("banner").classList.toggle("off-dim",!on);
+  try{localStorage.setItem("poetra_on",on?"1":"0");}catch(e){}if(on)screenNow();}
+function toggleTrade(){on=!on;applyTrade();}
+
+(function(){try{on=(localStorage.getItem("poetra_on")==="1");}catch(e){}
+  var t=document.getElementById("tgl");t.textContent=on?"TRADING ON":"TRADING OFF";t.className=on?"on":"off";
+  document.getElementById("signalArea").classList.toggle("off-dim",!on);document.getElementById("banner").classList.toggle("off-dim",!on);
+  loadTV();updateClock();
+  refreshGoldOffset().then(function(){screenNow();});
+  setInterval(updateClock,1000);
+  setInterval(refreshGoldOffset,40000);
+  setInterval(screenNow,60000);
+})();
+</script>
+</body>
+</html>
