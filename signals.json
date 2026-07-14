@@ -1,21 +1,21 @@
 {
-  "updated": "2026-07-14 11:01 UTC",
+  "updated": "2026-07-14 11:19 UTC",
   "symbols": {
     "XAU/USD": {
       "M1": {
         "bias": "WAIT",
-        "conf": 72,
-        "price": 4022.0,
-        "rsi": 62.1,
-        "utbot": "BUY",
-        "utbot_fresh": "",
+        "conf": 40,
+        "price": 4020.8,
+        "rsi": 52.4,
+        "utbot": "SELL",
+        "utbot_fresh": "SELL",
         "dir": "BULLISH"
       },
       "M5": {
         "bias": "WAIT",
         "conf": 24,
-        "price": 4022.0,
-        "rsi": 55.9,
+        "price": 4020.8,
+        "rsi": 52.2,
         "utbot": "BUY",
         "utbot_fresh": "",
         "dir": "RANGING"
@@ -23,8 +23,8 @@
       "M15": {
         "bias": "WAIT",
         "conf": 24,
-        "price": 4022.0,
-        "rsi": 53.6,
+        "price": 4020.8,
+        "rsi": 51.8,
         "utbot": "BUY",
         "utbot_fresh": "",
         "dir": "RANGING"
@@ -34,17 +34,17 @@
       "M1": {
         "bias": "WAIT",
         "conf": 40,
-        "price": 62725.6,
-        "rsi": 51.8,
+        "price": 62713.6,
+        "rsi": 53.0,
         "utbot": "SELL",
-        "utbot_fresh": "SELL",
+        "utbot_fresh": "",
         "dir": "BULLISH"
       },
       "M5": {
         "bias": "WAIT",
         "conf": 40,
-        "price": 62725.6,
-        "rsi": 57.8,
+        "price": 62713.6,
+        "rsi": 56.0,
         "utbot": "SELL",
         "utbot_fresh": "",
         "dir": "BULLISH"
@@ -52,8 +52,8 @@
       "M15": {
         "bias": "WAIT",
         "conf": 24,
-        "price": 62725.6,
-        "rsi": 59.2,
+        "price": 62713.6,
+        "rsi": 58.3,
         "utbot": "BUY",
         "utbot_fresh": "",
         "dir": "RANGING"
@@ -63,20 +63,15 @@
       "M1": {
         "bias": "WAIT",
         "conf": 40,
-        "price": 1800.0,
-        "rsi": 62.0,
+        "price": 1797.2,
+        "rsi": 52.3,
         "utbot": "SELL",
         "utbot_fresh": "",
         "dir": "BULLISH"
       },
       "M5": {
         "bias": "WAIT",
-        "conf": 60,
-        "price": 1800.0,
-        "rsi": 74.8,
-        "utbot": "BUY",
-        "utbot_fresh": "",
-        "dir": "BULLISH"
+        "conf": 0
       },
       "M15": {
         "bias": "WAIT",
