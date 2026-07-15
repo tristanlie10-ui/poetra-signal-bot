@@ -41,6 +41,10 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
 .ptitle{display:flex;justify-content:space-between;align-items:center;margin:2px 4px 6px;}
 .ptitle h2{font-size:14px;color:#fff;}
 .px{font-size:18px;font-weight:800;color:#25e6a8;}
+.pxwrap{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.cd{font-size:12px;font-weight:800;color:#06231a;background:#25e6a8;border-radius:6px;padding:2px 9px;letter-spacing:.4px;font-variant-numeric:tabular-nums;box-shadow:0 0 10px rgba(37,230,168,.45);transition:background .2s;}
+.cd.warn{background:#ffd15c;color:#3a2c00;}
+.cd.hot{background:#ff6b85;color:#fff;}
 .stats{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#8aa0c0;padding:2px 6px 4px;}
 .stats b{color:#dce8fb;font-weight:700;}
 .up{color:#25e6a8;}.down{color:#ff6b85;}
@@ -113,9 +117,9 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
     <div class="stats" id="stats"></div>
     <div id="tvchart"></div>
     <div id="utwrap" style="display:none">
-      <div class="ptitle"><h2 id="utname">XAUUSD · UT Bot</h2><div class="px" id="utpx">—</div></div>
+      <div class="ptitle"><h2 id="utname">XAUUSD · UT Bot</h2><div class="pxwrap"><div class="px" id="utpx">—</div><div class="cd" id="utcd">⏱ --:--</div></div></div>
       <div id="utchart"></div>
-      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA20 <span class="dot" style="background:#2f8fff"></span>EMA50 <span class="dot" style="background:#ff4d6d"></span>EMA200 · <span style="color:#b06cff">━ POC (Volume Profile)</span> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik</div>
+      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA20 <span class="dot" style="background:#2f8fff"></span>EMA50 <span class="dot" style="background:#ff4d6d"></span>EMA200 · <span style="color:#b06cff">━ POC (Volume Profile)</span> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView)</div>
     </div>
   </div>
 
@@ -132,7 +136,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
   <div id="signalArea"><div class="grid" id="cards"></div></div>
 
   <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, kini +ADX/+DI/-DI (konfirmasi arah), filter tren HTF, konfirmasi candle close, anti-ngejar harga, SL berbasis struktur (swing/OB + buffer) & minimal Risk:Reward 1.5. Sinyal hanya keluar bila SEMUA syarat sejalan. Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
-  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.0 PRO — mesin akurasi tinggi (ADX/DI+HTF+SL struktur, sinkron dengan bot Telegram) (terkunci)</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.1 PRO — mesin akurasi tinggi (ADX/DI+HTF+SL struktur) + countdown candle live sinkron TradingView (terkunci)</div>
 </div>
 
 <script>
@@ -225,7 +229,7 @@ async function klines(sym,intv,lim){var d=await bfetch("/api/v3/klines?symbol="+
 async function stat24(sym){var d=await bfetch("/api/v3/ticker/24hr?symbol="+sym);var out={chg:+d.priceChangePercent,high:+d.highPrice,low:+d.lowPrice,last:+d.lastPrice};if(sym==="PAXGUSDT"&&GOFF){out.high+=GOFF;out.low+=GOFF;out.last+=GOFF;}return out;}
 
 var SYM="PAXGUSDT",SNAME="XAUUSD",DIG=2,TF="15m",TVSYM="OANDA:XAUUSD",TVINT="15",on=false,SIGNALS_OK=true,CMODE="tv";
-var lastGood=0,tfSec=900,TFSECS={"1m":60,"5m":300,"15m":900,"1h":3600};
+var lastGood=0,tfSec=900,TFSECS={"1m":60,"5m":300,"15m":900,"1h":3600},_cdKey=Math.floor(Date.now()/1000/900);
 function fmt(x){return (x==null||isNaN(x))?"—":Number(x).toLocaleString("en-US",{minimumFractionDigits:DIG,maximumFractionDigits:DIG});}
 function bcls(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"b-buy":b.indexOf("SELL")>-1?"b-sell":"b-wait";}
 function bcol(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"#16d29a":b.indexOf("SELL")>-1?"#ff4d6d":"#22406e";}
@@ -233,8 +237,11 @@ function dcls(d){return d==="BULLISH"?"dir-bull":(d==="BEARISH"?"dir-bear":"dir-
 var TFS=[["M1","1m"],["M5","5m"],["M15","15m"]];
 function pad(n){return (n<10?"0":"")+n;}
 function wibNow(){try{return new Date().toLocaleTimeString("en-GB",{timeZone:"Asia/Jakarta",hour12:false});}catch(e){var d=new Date();return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());}}
-function updateClock(){var fresh=(Date.now()-lastGood)<45000;var cd="";if(fresh){var rem=tfSec-(Math.floor(Date.now()/1000)%tfSec);cd="  · candle "+pad(Math.floor(rem/60))+":"+pad(rem%60);}
-  var e=document.getElementById("clock");if(e){e.textContent=(fresh?"● LIVE ":"● menyambung… ")+wibNow()+" WIB"+cd;e.style.color=fresh?"#25e6a8":"#ff6b85";}}
+function updateClock(){var rem=tfSec-(Math.floor(Date.now()/1000)%tfSec);var mmss=pad(Math.floor(rem/60))+":"+pad(rem%60);
+  var fresh=(Date.now()-lastGood)<45000;
+  var e=document.getElementById("clock");if(e){e.textContent=(fresh?"● LIVE ":"● menyambung… ")+wibNow()+" WIB · candle "+mmss;e.style.color=fresh?"#25e6a8":"#ff6b85";}
+  var cd=document.getElementById("utcd");if(cd){cd.textContent="⏱ "+mmss;cd.className="cd"+(rem<=10?" hot":(rem<=30?" warn":""));}
+  var k=Math.floor(Date.now()/1000/tfSec);if(k!==_cdKey){_cdKey=k;if(CMODE==="ut"&&SIGNALS_OK){try{loadUT();}catch(_){}}try{screenNow();}catch(_){}}}
 
 function loadTV(){var el=document.getElementById("tvchart");if(!el)return;el.innerHTML="";
   try{new TradingView.widget({autosize:true,symbol:TVSYM,interval:TVINT,timezone:"Asia/Jakarta",theme:"dark",style:"1",locale:"id",toolbar_bg:"#000000",
