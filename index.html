@@ -131,8 +131,8 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
 
   <div id="signalArea"><div class="grid" id="cards"></div></div>
 
-  <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, hanya keluar bila yakin (confidence ≥ 82%). Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
-  <div class="foot">POETRA Teknologi Indonesia · versi stabil v7.2 PRO (terkunci)</div>
+  <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, kini +ADX/+DI/-DI (konfirmasi arah), filter tren HTF, konfirmasi candle close, anti-ngejar harga, SL berbasis struktur (swing/OB + buffer) & minimal Risk:Reward 1.5. Sinyal hanya keluar bila SEMUA syarat sejalan. Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.0 PRO — mesin akurasi tinggi (ADX/DI+HTF+SL struktur, sinkron dengan bot Telegram) (terkunci)</div>
 </div>
 
 <script>
@@ -165,8 +165,21 @@ function lastOB(o,h,l,c){for(var i=c.length-3;i>=1;i--){/* bullish OB: candle tu
   if(c[i]<o[i]&&c[i+1]>o[i+1]&&c[i+1]>h[i])return {type:"BULL",top:Math.max(o[i],c[i]),bot:l[i]};
   if(c[i]>o[i]&&c[i+1]<o[i+1]&&c[i+1]<l[i])return {type:"BEAR",top:h[i],bot:Math.min(o[i],c[i])};}return null;}
 
-function analyze(o,h,l,c,v){
-  if(!c||c.length<80)return {bias:"WAIT",conf:0,rsi:"-",utbot:"-",dir:"RANGING"};
+function adxDi(h,l,c,n){n=n||14;var pdm=[0],mdm=[0],tr=[0];
+  for(var i=1;i<c.length;i++){var up=h[i]-h[i-1],dn=l[i-1]-l[i];
+    pdm.push(up>dn&&up>0?up:0);mdm.push(dn>up&&dn>0?dn:0);
+    tr.push(Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])));}
+  function rma(x){var o=[],p=x[0];for(var i=0;i<x.length;i++){p=(p*(n-1)+x[i])/n;o.push(p);}return o;}
+  var atrr=rma(tr),pr=rma(pdm),mr=rma(mdm),pdi=[],mdi=[],dx=[];
+  for(var i=0;i<c.length;i++){var a=atrr[i]||1e-9;var P=100*pr[i]/a,M=100*mr[i]/a;pdi.push(P);mdi.push(M);
+    dx.push(100*Math.abs(P-M)/Math.max(P+M,1e-9));}
+  return {adx:rma(dx),pdi:pdi,mdi:mdi};}
+function biasFrom(c){var i=c.length-1;var e20=ema(c,20),e50=ema(c,50),e200=ema(c,200);
+  if(c[i]>e200[i]&&e20[i]>e50[i])return "BULLISH";if(c[i]<e200[i]&&e20[i]<e50[i])return "BEARISH";return "RANGING";}
+/* ===== analyze v9: ADX/DI directional + filter HTF + konfirmasi candle + anti-ngejar + SL struktur + min RR ===== */
+function analyze(o,h,l,c,v,htf){
+  if(!c||c.length<120)return {bias:"WAIT",conf:0,rsi:"-",utbot:"-",dir:"RANGING",htf:htf||"-"};
+  htf=htf||"RANGING";
   var i=c.length-1,px=c[i];
   var e20=ema(c,20),e50=ema(c,50),e200=ema(c,200),r=rsiArr(c,14),mh=macdHist(c),a=atr(h,l,c,14);
   var sf=swingFib(h,l,80),ub=utbot(h,l,c);
@@ -177,23 +190,24 @@ function analyze(o,h,l,c,v){
   var mUp=mh[i]>0&&mh[i]>mh[i-1], mDn=mh[i]<0&&mh[i]<mh[i-1];
   var rBuy=r[i]>=45&&r[i]<=68, rSell=r[i]>=32&&r[i]<=55;
   var poc=volPOC(h,l,c,v),fvg=lastFVG(h,l),ob=lastOB(o,h,l,c);
-  var nearOBbuy=ob&&ob.type==="BULL"&&px>=ob.bot-a[i]&&px<=ob.top+a[i];
-  var nearOBsell=ob&&ob.type==="BEAR"&&px>=ob.bot-a[i]&&px<=ob.top+a[i];
-  var nearFVGbuy=fvg&&fvg.type==="BULL"&&px>=Math.min(fvg.top,fvg.bot)-a[i]&&px<=Math.max(fvg.top,fvg.bot)+a[i];
-  var nearFVGsell=fvg&&fvg.type==="BEAR"&&px>=Math.min(fvg.top,fvg.bot)-a[i]&&px<=Math.max(fvg.top,fvg.bot)+a[i];
-  var abovePOC=px>poc;
-  var conf=0,bias="WAIT",MIN=82;
-  if(bull){conf=26+(ub.pos==="BUY"?16:0)+(mUp?14:0)+(rBuy?10:0)+(inGold?12:0)+(ub.fresh==="BUY"?6:0)+((nearOBbuy||nearFVGbuy)?10:0)+(abovePOC?6:0);
-    if(conf>=MIN&&ub.pos==="BUY"&&inGold)bias="BUY";}
-  else if(bear){conf=26+(ub.pos==="SELL"?16:0)+(mDn?14:0)+(rSell?10:0)+(inGold?12:0)+(ub.fresh==="SELL"?6:0)+((nearOBsell||nearFVGsell)?10:0)+(!abovePOC?6:0);
-    if(conf>=MIN&&ub.pos==="SELL"&&inGold)bias="SELL";}
-  else{conf=22+(inGold?8:0);}
-  var res={bias:bias,conf:Math.min(conf,98)|0,price:px,rsi:Math.round(r[i]*10)/10,utbot:ub.pos,utbot_fresh:ub.fresh,dir:dir,gzLo:gzLo,gzHi:gzHi,poc:poc,ob:ob,fvg:fvg,atr:a[i]};
-  /* SL diperkecil: 1.0*ATR (lebih rapat, risk 0.5%) */
-  if(bias==="BUY"){res.entry=px;res.sl=Math.min(px-1.5*a[i],gzLo-0.3*a[i]);res.tp1=sf.hi;res.tp2=sf.hi+0.618*sf.rng;}
-  else if(bias==="SELL"){res.entry=px;res.sl=Math.max(px+1.5*a[i],gzHi+0.3*a[i]);res.tp1=sf.lo;res.tp2=sf.lo-0.618*sf.rng;}
+  var dd=adxDi(h,l,c,14),adx=dd.adx[i],pdi=dd.pdi[i],mdi=dd.mdi[i];
+  var diBull=pdi>mdi, diBear=mdi>pdi, adxOk=adx>=20;
+  var candBull=c[i]>o[i], candBear=c[i]<o[i];
+  var notExt=Math.abs(px-e20[i])<=1.4*a[i];
+  var swLo=Math.min.apply(null,l.slice(-14)), swHi=Math.max.apply(null,h.slice(-14));
+  var conf=0,bias="WAIT";
+  if(bull&&htf==="BULLISH"&&diBull&&ub.pos==="BUY"&&inGold&&adxOk&&candBull&&notExt&&rBuy){
+    conf=60+(mUp?12:0)+(adx>=25?10:0)+(ub.fresh==="BUY"?8:0)+((pdi-mdi)>=8?6:0);bias="BUY";}
+  else if(bear&&htf==="BEARISH"&&diBear&&ub.pos==="SELL"&&inGold&&adxOk&&candBear&&notExt&&rSell){
+    conf=60+(mDn?12:0)+(adx>=25?10:0)+(ub.fresh==="SELL"?8:0)+((mdi-pdi)>=8?6:0);bias="SELL";}
+  else{conf=20+(inGold?8:0)+(adxOk?6:0);}
+  var res={bias:bias,conf:Math.min(conf,98)|0,price:px,rsi:Math.round(r[i]*10)/10,utbot:ub.pos,utbot_fresh:ub.fresh,dir:dir,gzLo:gzLo,gzHi:gzHi,poc:poc,ob:ob,fvg:fvg,atr:a[i],adx:Math.round(adx),pdi:Math.round(pdi),mdi:Math.round(mdi),htf:htf};
+  var buf=0.5*a[i];
+  if(bias==="BUY"){res.entry=px;res.sl=Math.min(swLo,gzLo,(ob&&ob.type==="BULL")?ob.bot:1e18)-buf;var rk=px-res.sl;res.tp1=Math.max(sf.hi,px+1.8*rk);res.tp2=px+3.0*rk;}
+  else if(bias==="SELL"){res.entry=px;res.sl=Math.max(swHi,gzHi,(ob&&ob.type==="BEAR")?ob.top:-1e18)+buf;var rk=res.sl-px;res.tp1=Math.min(sf.lo,px-1.8*rk);res.tp2=px-3.0*rk;}
   if(res.entry!==undefined){res.tp1pct=Math.round(Math.abs(res.tp1-res.entry)/res.entry*10000)/100;res.tp2pct=Math.round(Math.abs(res.tp2-res.entry)/res.entry*10000)/100;
-    res.rr=Math.round(Math.abs(res.tp1-res.entry)/Math.max(Math.abs(res.entry-res.sl),1e-9)*10)/10;}
+    res.rr=Math.round(Math.abs(res.tp1-res.entry)/Math.max(Math.abs(res.entry-res.sl),1e-9)*10)/10;
+    if(res.rr<1.5){res.bias="WAIT";res.conf=Math.min(res.conf,55);delete res.entry;delete res.sl;delete res.tp1;delete res.tp2;}}
   return res;
 }
 
@@ -282,13 +296,19 @@ function setBanner(best){var b=document.getElementById("banner");
 async function screenNow(force){var b1=document.getElementById("ref1");b1.classList.add("busy");
   var price=await loadStats();if(CMODE==="ut")loadUT();var g=document.getElementById("cards");var best=null,list=[];
   if(!SIGNALS_OK){document.getElementById("summary").textContent="Sinyal AI tersedia untuk XAUUSD, BTC, ETH, SOL, BNB. Chart menampilkan "+SNAME+" (mode chart-only).";setBanner(null);g.innerHTML="";b1.classList.remove("busy");return;}
-  for(var k=0;k<TFS.length;k++){var tf=TFS[k][0],res;
-    try{var d=await klines(SYM,TFS[k][1],300);res=analyze(d.o,d.h,d.l,d.c,d.v);if(price==null)price=res.price;}catch(e){res={bias:"WAIT",conf:0,rsi:"-",utbot:"-",dir:"RANGING"};}
+  var HTFB={};try{var dh1=await klines(SYM,"15m",250);HTFB.m15=biasFrom(dh1.c);}catch(e){HTFB.m15="RANGING";}
+  try{var dh2=await klines(SYM,"1h",250);HTFB.h1=biasFrom(dh2.c);}catch(e){HTFB.h1="RANGING";}
+  for(var k=0;k<TFS.length;k++){var tf=TFS[k][0],res;var htfb=(tf==="M15")?HTFB.h1:HTFB.m15;
+    try{var d=await klines(SYM,TFS[k][1],300);res=analyze(d.o,d.h,d.l,d.c,d.v,htfb);if(price==null)price=res.price;}catch(e){res={bias:"WAIT",conf:0,rsi:"-",utbot:"-",dir:"RANGING",htf:htfb};}
     list.push({tf:tf,res:res});var card=g.children[k];if(!card){card=document.createElement("div");card.className="card";g.appendChild(card);}
     card.style.borderTopColor=bcol(res.bias);var ubc=res.utbot==="BUY"?"#25e6a8":(res.utbot==="SELL"?"#ff6b85":"#7fa8d6");
     var frTag=res.utbot_fresh?'<span class="fresh">⚡FRESH '+res.utbot_fresh+'</span>':'';var arrow=res.dir==="BULLISH"?"▲":(res.dir==="BEARISH"?"▼":"■");
     var obtxt=res.ob?(res.ob.type+" "+fmt(res.ob.bot)+"–"+fmt(res.ob.top)):"-";
+    var htfc=res.htf==="BULLISH"?dcls("BULLISH"):(res.htf==="BEARISH"?dcls("BEARISH"):"v");
+    var adxc=(res.adx>=25)?'#25e6a8':((res.adx>=20)?'#ffd15c':'#ff6b85');
     var rows='<div class="row"><span class="k">Arah (Fibo)</span><span class="'+dcls(res.dir)+'">'+arrow+' '+res.dir+'</span></div>'+
+             '<div class="row"><span class="k">Tren HTF</span><span class="'+htfc+'">'+(res.htf||'-')+'</span></div>'+
+             '<div class="row"><span class="k">ADX / +DI:-DI</span><span class="v" style="color:'+adxc+'">'+(res.adx||'-')+' · '+(res.pdi||'-')+':'+(res.mdi||'-')+'</span></div>'+
              '<div class="row"><span class="k">Golden Zone</span><span class="v">'+fmt(res.gzLo)+' – '+fmt(res.gzHi)+'</span></div>'+
              '<div class="row"><span class="k">POC / ATR</span><span class="v">'+fmt(res.poc)+' / '+fmt(res.atr)+'</span></div>'+
              '<div class="row"><span class="k">Order Block</span><span class="v">'+obtxt+'</span></div>'+
@@ -300,7 +320,7 @@ async function screenNow(force){var b1=document.getElementById("ref1");b1.classL
       '<div class="row"><span class="k">TP2</span><span class="v v-tp">'+fmt(res.tp2)+' (+'+res.tp2pct+'%)</span></div>'+
       '<div class="row"><span class="k">Risk:Reward</span><span class="v">'+res.rr+'</span></div>';
       if(!best||res.conf>best.conf)best={tf:tf,bias:res.bias,conf:res.conf,entry:res.entry,sl:res.sl,tp1:res.tp1,dir:res.dir,rr:res.rr};
-    }else{rows+='<div class="note">Belum yakin (RSI '+(res.rsi||"-")+'). Butuh: tren '+res.dir+' + UT Bot searah + golden zone Fibo + konfirmasi OB/FVG. WAIT.</div>';}
+    }else{rows+='<div class="note">Belum yakin (RSI '+(res.rsi||"-")+'). Butuh SEMUA sejalan: tren '+res.dir+' + tren HTF searah + +DI/-DI dominan + ADX&ge;20 + UT Bot searah + golden zone + candle close searah + tak overextended. WAIT.</div>';}
     card.innerHTML='<h3><span class="tf">'+tf+'</span><span class="badge '+bcls(res.bias)+'">'+(res.bias||"WAIT")+'</span></h3>'+rows;}
   setBanner(best);buildSummary(list,price,best);b1.classList.remove("busy");}
 
