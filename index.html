@@ -45,6 +45,10 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
 .cd{font-size:12px;font-weight:800;color:#06231a;background:#25e6a8;border-radius:6px;padding:2px 9px;letter-spacing:.4px;font-variant-numeric:tabular-nums;box-shadow:0 0 10px rgba(37,230,168,.45);transition:background .2s;}
 .cd.warn{background:#ffd15c;color:#3a2c00;}
 .cd.hot{background:#ff6b85;color:#fff;}
+.sarow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 4px 8px;}
+.satog{font-size:12px;font-weight:800;border:1px solid #2a3550;background:#141c2e;color:#8aa0c0;border-radius:8px;padding:5px 12px;cursor:pointer;}
+.satog.on{background:linear-gradient(135deg,#00c853,#2f80ff);color:#fff;border-color:transparent;box-shadow:0 0 12px rgba(0,200,83,.35);}
+.sahint{font-size:11px;color:#8aa0c0;}
 .stats{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#8aa0c0;padding:2px 6px 4px;}
 .stats b{color:#dce8fb;font-weight:700;}
 .up{color:#25e6a8;}.down{color:#ff6b85;}
@@ -118,8 +122,9 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
     <div id="tvchart"></div>
     <div id="utwrap" style="display:none">
       <div class="ptitle"><h2 id="utname">XAUUSD · UT Bot</h2><div class="pxwrap"><div class="px" id="utpx">—</div><div class="cd" id="utcd">⏱ --:--</div></div></div>
+      <div class="sarow"><button class="satog on" id="sabtn" onclick="toggleSA()">🎯 Stocks Algo (SA): ON</button><span class="sahint">Entry · Stoploss · Target 1-3 otomatis (ATR 22 × 3) — flip Buy/Sell</span></div>
       <div id="utchart"></div>
-      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA20 <span class="dot" style="background:#2f8fff"></span>EMA50 <span class="dot" style="background:#ff4d6d"></span>EMA200 · <span style="color:#b06cff">━ POC (Volume Profile)</span> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView)</div>
+      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA20 <span class="dot" style="background:#2f8fff"></span>EMA50 <span class="dot" style="background:#ff4d6d"></span>EMA200 · <span style="color:#b06cff">━ POC (Volume Profile)</span> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView) · 🎯 Stocks Algo: <span style="color:#2f80ff">━ Entry</span> / <span style="color:#ff3b3b">━ SL</span> / <span style="color:#00c853">━ Target 1-3</span></div>
     </div>
   </div>
 
@@ -136,7 +141,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
   <div id="signalArea"><div class="grid" id="cards"></div></div>
 
   <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, kini +ADX/+DI/-DI (konfirmasi arah), filter tren HTF, konfirmasi candle close, anti-ngejar harga, SL berbasis struktur (swing/OB + buffer) & minimal Risk:Reward 1.5. Sinyal hanya keluar bila SEMUA syarat sejalan. Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
-  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.1 PRO — mesin akurasi tinggi (ADX/DI+HTF+SL struktur) + countdown candle live sinkron TradingView (terkunci)</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.2 PRO — + indikator Stocks Algo (ATR22×3: Entry/SL/Target1-3) di chart UT Bot (terkunci)</div>
 </div>
 
 <script>
@@ -169,6 +174,22 @@ function lastOB(o,h,l,c){for(var i=c.length-3;i>=1;i--){/* bullish OB: candle tu
   if(c[i]<o[i]&&c[i+1]>o[i+1]&&c[i+1]>h[i])return {type:"BULL",top:Math.max(o[i],c[i]),bot:l[i]};
   if(c[i]>o[i]&&c[i+1]<o[i+1]&&c[i+1]<l[i])return {type:"BEAR",top:h[i],bot:Math.min(o[i],c[i])};}return null;}
 
+function saStops(o,h,l,c,len,mlt){len=len||22;mlt=mlt||3.0;var n=c.length;var ar=atr(h,l,c,len);
+  var dir=new Array(n).fill(1),ls=new Array(n).fill(0),ss=new Array(n).fill(0);
+  for(var i=0;i<n;i++){var a=mlt*(ar[i]||0);var s0=Math.max(0,i-len+1);
+    var hi=Math.max.apply(null,c.slice(s0,i+1)),lo=Math.min.apply(null,c.slice(s0,i+1));
+    var L=hi-a,S=lo+a;var Lp=i>0?ls[i-1]:L,Sp=i>0?ss[i-1]:S;
+    if(i>0&&c[i-1]>Lp)L=Math.max(L,Lp);if(i>0&&c[i-1]<Sp)S=Math.min(S,Sp);
+    ls[i]=L;ss[i]=S;var d=i>0?dir[i-1]:1;if(c[i]>Sp)d=1;else if(c[i]<Lp)d=-1;dir[i]=d;}
+  return {dir:dir,ar:ar,mlt:mlt};}
+function computeSA(d){var sa=saStops(d.o,d.h,d.l,d.c,22,3.0);var n=d.c.length;
+  for(var i=n-1;i>=1;i--){var b=sa.dir[i]===1&&sa.dir[i-1]===-1,se=sa.dir[i]===-1&&sa.dir[i-1]===1;
+    if(b||se){var a=sa.mlt*(sa.ar[i]||0);var e=b?d.h[i]:d.l[i];
+      return {buy:b,bar:i,entry:e,sl:b?e-a*0.5:e+a*0.5,t1:b?e+a:e-a,t2:b?e+a*1.5:e-a*1.5,t3:b?e+a*2:e-a*2};}}
+  return null;}
+function toggleSA(){SA_ON=!SA_ON;var b=document.getElementById('sabtn');
+  if(b){b.textContent='🎯 Stocks Algo (SA): '+(SA_ON?'ON':'OFF');b.classList.toggle('on',SA_ON);}
+  try{localStorage.setItem('poetra_sa',SA_ON?'1':'0');}catch(e){}if(CMODE==='ut')loadUT();}
 function adxDi(h,l,c,n){n=n||14;var pdm=[0],mdm=[0],tr=[0];
   for(var i=1;i<c.length;i++){var up=h[i]-h[i-1],dn=l[i-1]-l[i];
     pdm.push(up>dn&&up>0?up:0);mdm.push(dn>up&&dn>0?dn:0);
@@ -230,6 +251,7 @@ async function stat24(sym){var d=await bfetch("/api/v3/ticker/24hr?symbol="+sym)
 
 var SYM="PAXGUSDT",SNAME="XAUUSD",DIG=2,TF="15m",TVSYM="OANDA:XAUUSD",TVINT="15",on=false,SIGNALS_OK=true,CMODE="tv";
 var lastGood=0,tfSec=900,TFSECS={"1m":60,"5m":300,"15m":900,"1h":3600},_cdKey=Math.floor(Date.now()/1000/900);
+var SA_ON=true;try{SA_ON=(localStorage.getItem("poetra_sa")!=="0");}catch(e){}
 function fmt(x){return (x==null||isNaN(x))?"—":Number(x).toLocaleString("en-US",{minimumFractionDigits:DIG,maximumFractionDigits:DIG});}
 function bcls(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"b-buy":b.indexOf("SELL")>-1?"b-sell":"b-wait";}
 function bcol(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"#16d29a":b.indexOf("SELL")>-1?"#ff4d6d":"#22406e";}
@@ -270,10 +292,12 @@ async function loadUT(){if(!SIGNALS_OK){document.getElementById("utpx").textCont
     var st=utStops(d.h,d.l,d.c,0.8,8);var mk=[];
     for(var i=1;i<d.c.length;i++){if(d.c[i]>st[i]&&d.c[i-1]<=st[i-1])mk.push({time:d.t[i],position:"belowBar",color:"#26a69a",shape:"arrowUp",text:"BUY"});
       else if(d.c[i]<st[i]&&d.c[i-1]>=st[i-1])mk.push({time:d.t[i],position:"aboveBar",color:"#ef5350",shape:"arrowDown",text:"SELL"});}
+    if(SA_ON){window.__SAsig=computeSA(d);if(window.__SAsig){var _g=window.__SAsig;mk.push({time:d.t[_g.bar],position:_g.buy?"belowBar":"aboveBar",color:_g.buy?"#2e7d32":"#c62828",shape:_g.buy?"arrowUp":"arrowDown",text:_g.buy?"SA Buy Entry":"SA Sell Entry"});}}else{window.__SAsig=null;}
     ucs.setMarkers(mk);
     clearLines();var poc=volPOC(d.h,d.l,d.c,d.v);addLine(poc,"#b06cff","POC",2);
     var ob=lastOB(d.o,d.h,d.l,d.c);if(ob){addLine(ob.top,"#5b8def","OB",3);addLine(ob.bot,"#5b8def","OB",3);}
     var fvg=lastFVG(d.h,d.l);if(fvg){addLine(Math.max(fvg.top,fvg.bot),"#00e0ff","FVG",3);addLine(Math.min(fvg.top,fvg.bot),"#00e0ff","FVG",3);}
+    if(SA_ON&&window.__SAsig){var _g=window.__SAsig;addLine(_g.entry,"#2f80ff","SA Entry "+fmt(_g.entry),0);addLine(_g.sl,"#ff3b3b","SA SL "+fmt(_g.sl),2);addLine(_g.t1,"#00c853","SA T1 "+fmt(_g.t1),2);addLine(_g.t2,"#00c853","SA T2 "+fmt(_g.t2),2);addLine(_g.t3,"#00c853","SA T3 "+fmt(_g.t3),2);}
     document.getElementById("utname").textContent=SNAME+" · UT Bot + SMC";document.getElementById("utpx").textContent=fmt(d.c[d.c.length-1]);lastGood=Date.now();
   }catch(e){document.getElementById("utpx").textContent="err";}}
 async function tickUT(){if(CMODE!=="ut"||!SIGNALS_OK||!utReady)return;
@@ -370,6 +394,7 @@ function watchdog(){/* jika data macet >90 detik, coba sembuhkan sendiri */
   var t=document.getElementById("tgl");t.textContent=on?"TRADING ON":"TRADING OFF";t.className=on?"on":"off";
   document.getElementById("signalArea").classList.toggle("off-dim",!on);document.getElementById("banner").classList.toggle("off-dim",!on);document.getElementById("summary").classList.toggle("off-dim",!on);
   loadTV();switchChart('ut');updateClock();refreshGoldOffset().then(function(){screenNow();});
+  (function(){var b=document.getElementById("sabtn");if(b){b.textContent="🎯 Stocks Algo (SA): "+(SA_ON?"ON":"OFF");b.classList.toggle("on",SA_ON);}})();
   setInterval(updateClock,1000);
   setInterval(refreshGoldOffset,40000);
   setInterval(tickUT,2000);                         // candle UT Bot update tiap 2 detik
