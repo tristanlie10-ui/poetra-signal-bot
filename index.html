@@ -124,7 +124,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
       <div class="ptitle"><h2 id="utname">XAUUSD · UT Bot</h2><div class="pxwrap"><div class="px" id="utpx">—</div><div class="cd" id="utcd">⏱ --:--</div></div></div>
       <div class="sarow"><button class="satog on" id="sabtn" onclick="toggleSA()">🎯 Auto Entry+TP Fibo: ON</button><span class="sahint">Setiap sinyal UT Bot → Entry · SL · TP1 · TP2 · TP3 otomatis (proyeksi Fibonacci 0.618 / 1.0 / 1.618)</span></div>
       <div id="utchart"></div>
-      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA20 <span class="dot" style="background:#2f8fff"></span>EMA50 <span class="dot" style="background:#ff4d6d"></span>EMA200 · <span style="color:#b06cff">━ POC (Volume Profile)</span> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView) · 🎯 Auto (UT Bot + Fibonacci): <span style="color:#2f80ff">━ Entry</span> / <span style="color:#ff3b3b">━ SL</span> / <span style="color:#25e6a8">━ TP1/TP2/TP3</span> · POC/OB/FVG kini garis tipis tanpa label (biar rapi)</div>
+      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA20 <span class="dot" style="background:#2f8fff"></span>EMA50 <span class="dot" style="background:#ff4d6d"></span>EMA200 · <span style="color:#b06cff">━ POC (Volume Profile)</span> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView) · 🎯 Auto (UT Bot + Fibonacci): <span style="color:#2f80ff">━ Entry</span> / <span style="color:#ff3b3b">━ SL</span> / <span style="color:#25e6a8">━ TP1/TP2/TP3</span> · garis Entry/SL/TP ditarik dari bar sinyal ke kanan (tidak menembus ke kiri) · POC/OB/FVG garis tipis tanpa label (biar rapi)</div>
     </div>
   </div>
 
@@ -141,7 +141,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
   <div id="signalArea"><div class="grid" id="cards"></div></div>
 
   <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, kini +ADX/+DI/-DI (konfirmasi arah), filter tren HTF, konfirmasi candle close, anti-ngejar harga, SL berbasis struktur (swing/OB + buffer) & minimal Risk:Reward 1.5. Sinyal hanya keluar bila SEMUA syarat sejalan. Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
-  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.3 PRO — UT Bot signal → Entry/SL/TP1-3 (Fibonacci) + chart dirapikan, sejalan Pine POETRA (terkunci)</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.4 PRO — garis Entry/SL/TP1-3 ditarik dari titik sinyal ke kanan (seperti Pine POETRA) (terkunci)</div>
 </div>
 
 <script>
@@ -266,7 +266,7 @@ function loadTV(){var el=document.getElementById("tvchart");if(!el)return;el.inn
     studies:["STD;EMA","STD;VWAP","STD;RSI","STD;MACD","STD;Average%1True%1Range"],container_id:"tvchart"});
   }catch(e){el.innerHTML='<div style="padding:24px;color:#9dbdf0;text-align:center">Chart TradingView gagal dimuat. <a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(TVSYM)+'" target="_blank" style="color:#00e0ff">Buka di TradingView →</a></div>';}}
 
-var utc,ucs,ul20,ul50,ul200,utReady=false,plLines=[];
+var utc,ucs,ul20,ul50,ul200,utReady=false,plLines=[],saLine={};
 function initUT(){var el=document.getElementById("utchart");if(!el||utReady)return;
   utc=LightweightCharts.createChart(el,{layout:{background:{type:"solid",color:"#000000"},textColor:"#b7c4d6"},
     grid:{vertLines:{color:"rgba(120,140,170,.10)"},horzLines:{color:"rgba(120,140,170,.10)"}},
@@ -275,6 +275,8 @@ function initUT(){var el=document.getElementById("utchart");if(!el||utReady)retu
   ul20=utc.addLineSeries({color:"#ffd15c",lineWidth:1,priceLineVisible:false,lastValueVisible:false});
   ul50=utc.addLineSeries({color:"#2f8fff",lineWidth:1,priceLineVisible:false,lastValueVisible:false});
   ul200=utc.addLineSeries({color:"#ff4d6d",lineWidth:1,priceLineVisible:false,lastValueVisible:false});
+  var SACOL={entry:"#2f80ff",sl:"#ff3b3b",tp1:"#25e6a8",tp2:"#12c98d",tp3:"#0aa574"},SATTL={entry:"Entry",sl:"SL",tp1:"TP1",tp2:"TP2",tp3:"TP3"};
+  ["entry","sl","tp1","tp2","tp3"].forEach(function(k){saLine[k]=utc.addLineSeries({color:SACOL[k],lineWidth:2,lineStyle:(k==="entry"?0:2),priceLineVisible:false,lastValueVisible:true,title:SATTL[k],crosshairMarkerVisible:false});});
   window.addEventListener("resize",function(){if(utc)utc.applyOptions({width:el.clientWidth,height:el.clientHeight});});
   utReady=true;}
 function clearLines(){plLines.forEach(function(pl){try{ucs.removePriceLine(pl);}catch(e){}});plLines=[];}
@@ -292,7 +294,14 @@ async function loadUT(){if(!SIGNALS_OK){document.getElementById("utpx").textCont
     clearLines();var poc=volPOC(d.h,d.l,d.c,d.v);addLine(poc,"#7a5cc2","",2,false);
     var ob=lastOB(d.o,d.h,d.l,d.c);if(ob){addLine(ob.top,"#33507e","",3,false);addLine(ob.bot,"#33507e","",3,false);}
     var fvg=lastFVG(d.h,d.l);if(fvg){addLine(Math.max(fvg.top,fvg.bot),"#1c7d99","",3,false);addLine(Math.min(fvg.top,fvg.bot),"#1c7d99","",3,false);}
-    if(SA_ON&&window.__SAsig){var _g=window.__SAsig;var _tag=_g.buy?"BUY":"SELL";addLine(_g.entry,"#2f80ff","▶ Entry "+_tag+" "+fmt(_g.entry),0,true);addLine(_g.sl,"#ff3b3b","✖ SL "+fmt(_g.sl),2,true);addLine(_g.tp1,"#25e6a8","TP1 "+fmt(_g.tp1),2,true);addLine(_g.tp2,"#12c98d","TP2 "+fmt(_g.tp2),2,true);addLine(_g.tp3,"#0aa574","TP3 "+fmt(_g.tp3),2,true);}
+    var _lastT=d.t[d.t.length-1],_rightT=_lastT+8*tfSec;
+    if(SA_ON&&window.__SAsig){var _g=window.__SAsig;var _sigT=d.t[Math.max(0,Math.min(_g.bar,d.t.length-1))];if(_sigT>=_rightT)_sigT=_lastT-tfSec;
+      saLine.entry.setData([{time:_sigT,value:_g.entry},{time:_rightT,value:_g.entry}]);
+      saLine.sl.setData([{time:_sigT,value:_g.sl},{time:_rightT,value:_g.sl}]);
+      saLine.tp1.setData([{time:_sigT,value:_g.tp1},{time:_rightT,value:_g.tp1}]);
+      saLine.tp2.setData([{time:_sigT,value:_g.tp2},{time:_rightT,value:_g.tp2}]);
+      saLine.tp3.setData([{time:_sigT,value:_g.tp3},{time:_rightT,value:_g.tp3}]);
+    }else{["entry","sl","tp1","tp2","tp3"].forEach(function(k){try{saLine[k].setData([]);}catch(e){}});}
     document.getElementById("utname").textContent=SNAME+" · UT Bot + SMC";document.getElementById("utpx").textContent=fmt(d.c[d.c.length-1]);lastGood=Date.now();
   }catch(e){document.getElementById("utpx").textContent="err";}}
 async function tickUT(){if(CMODE!=="ut"||!SIGNALS_OK||!utReady)return;
