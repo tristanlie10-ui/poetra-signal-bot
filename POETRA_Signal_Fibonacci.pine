@@ -1,107 +1,231 @@
 //@version=5
 // =====================================================================
-//  POETRA Signal + Fibonacci TP  (shorttitle: POETRA SA)
-//  SEJALAN dengan dashboard POETRA (UT Bot key=0.8 / ATR=8) + TP Fibonacci
-//  Menggantikan script "Stocks Algo" lama (ATR22x3) yang TIDAK sinkron
-//  dengan sinyal UT Bot di dashboard.
+//  POETRA Signal PRO  (shorttitle: POETRA PRO)
+//  Sinyal entry high-conviction + Fibonacci TP + auto-hapus saat siklus selesai
 //
-//  Logika:
-//   - Sinyal = UT Bot Alerts (ATR trailing stop) : key(sensitivitas)=0.8, ATR period=8
-//     -> identik dengan arrow BUY/SELL di dashboard.
-//   - Setiap sinyal BUY/SELL langsung menggambar: Entry, Stop Loss,
-//     TP1, TP2, TP3 berbasis proyeksi Fibonacci dari swing (lookback 80).
-//       TP = Entry +/- (0.618 / 1.0 / 1.618) x range_swing
-//       SL = struktur swing (14 bar) +/- 0.3xATR14
+//  ALUR:
+//   1) UT Bot Alerts (key=0.8 / ATR=8) memberi trigger BUY/SELL (sama dgn dashboard).
+//   2) Sinyal HANYA ditampilkan bila YAKIN: tren EMA + tren Higher-Timeframe +
+//      +DI/-DI searah + ADX kuat + RSI sehat + candle confirm + momentum MACD +
+//      tidak overextended, DAN Confidence >= ambang, DAN Risk:Reward >= minimal.
+//   3) Fibonacci memberi Entry, SL, TP1, TP2, TP3.
+//   4) Saat harga kena SL atau tembus TP3, ATAU UT Bot flip arah (siklus selesai),
+//      gambar lama otomatis DIHAPUS lalu sinyal baru yang valid ditampilkan.
+//   5) alert() dikirim tiap sinyal -> pakai untuk Alert TradingView (server-side,
+//      jalan 24/7 walau browser ditutup).
+//
+//  CATATAN JUJUR: tidak ada sistem 100%. Ini alat bantu, bukan nasihat keuangan.
+//  Maks 1% risiko/trade, selalu hormati SL.
 // =====================================================================
-indicator('POETRA Signal + Fibonacci TP', shorttitle='POETRA SA', overlay=true)
+indicator("POETRA Signal PRO", shorttitle="POETRA PRO", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
 
-// ---------- Inputs ----------
-grpSig  = 'Sinyal (UT Bot)'
-keyVal  = input.float(0.8, 'Sensitivity (key)', step=0.1, group=grpSig)
-atrLen  = input.int(8,     'ATR Period',        group=grpSig)
+// ================= INPUTS =================
+gS = "Sinyal (UT Bot)"
+keyVal   = input.float(0.8, "Sensitivity (key)", step=0.1, group=gS)
+atrLen   = input.int(8,     "ATR Period",        group=gS)
+awaitBar = input.bool(true, "Konfirmasi candle close (anti-repaint)", group=gS)
 
-grpFib  = 'Target (Fibonacci)'
-swingLB = input.int(80,    'Swing Lookback',    group=grpFib)
-f1      = input.float(0.618,'TP1 x range',      step=0.1, group=grpFib)
-f2      = input.float(1.0,  'TP2 x range',      step=0.1, group=grpFib)
-f3      = input.float(1.618,'TP3 x range',      step=0.1, group=grpFib)
+gC = "Filter Keyakinan (hanya tampil jika yakin)"
+confMin = input.int(65,  "Minimal Confidence %", minval=0, maxval=100, group=gC)
+useHTF  = input.bool(true,"Filter tren Higher-Timeframe", group=gC)
+adxMin  = input.int(20,  "ADX minimum",          group=gC)
+rrMin   = input.float(1.5,"Minimal Risk:Reward",  step=0.1, group=gC)
 
-grpVis  = 'Tampilan'
-showLbl = input.bool(true, 'Tampilkan garis Entry/SL/TP', group=grpVis)
-awaitBar= input.bool(true, 'Tunggu candle close (konfirmasi)', group=grpVis)
+gF = "Target (Fibonacci)"
+swingLB = input.int(80,   "Swing Lookback", group=gF)
+f1 = input.float(0.618, "TP1 x range", step=0.1, group=gF)
+f2 = input.float(1.0,   "TP2 x range", step=0.1, group=gF)
+f3 = input.float(1.618, "TP3 x range", step=0.1, group=gF)
 
-// ---------- UT Bot ATR trailing stop (sama persis dengan dashboard utStops) ----------
-xATR  = ta.atr(atrLen)
-nLoss = keyVal * xATR
+gV = "Tampilan"
+projLen  = input.int(40,   "Panjang garis ke kanan (bar)", group=gV)
+showZone = input.bool(true, "Blok zona SL/TP (transparan)", group=gV)
 
+// ================= INDIKATOR =================
+ema20  = ta.ema(close, 20)
+ema50  = ta.ema(close, 50)
+ema200 = ta.ema(close, 200)
+rsiV   = ta.rsi(close, 14)
+atr14  = ta.atr(14)
+[macdL, macdSig, macdH] = ta.macd(close, 12, 26, 9)
+[dip, dim, adxV] = ta.dmi(14, 14)
+
+// UT Bot ATR trailing stop
+nLoss = keyVal * ta.atr(atrLen)
 var float st = na
 st := na(st[1]) ? close - nLoss :
      (close > st[1] and close[1] > st[1]) ? math.max(st[1], close - nLoss) :
      (close < st[1] and close[1] < st[1]) ? math.min(st[1], close + nLoss) :
      (close > st[1]) ? close - nLoss : close + nLoss
+buySig  = close > st and close[1] <= st[1]
+sellSig = close < st and close[1] >= st[1]
 
-buySignal  = close > st and close[1] <= st[1]
-sellSignal = close < st and close[1] >= st[1]
+plotshape(buySig,  title="UT BUY",  text="BUY",  style=shape.labelup,   location=location.belowbar, color=color.new(color.green,0), textcolor=color.white, size=size.tiny)
+plotshape(sellSig, title="UT SELL", text="SELL", style=shape.labeldown, location=location.abovebar, color=color.new(color.red,0),   textcolor=color.white, size=size.tiny)
 
-plotshape(buySignal,  title='BUY',  text='BUY',  style=shape.labelup,   location=location.belowbar, color=color.new(color.green, 0), textcolor=color.white, size=size.tiny)
-plotshape(sellSignal, title='SELL', text='SELL', style=shape.labeldown, location=location.abovebar, color=color.new(color.red, 0),   textcolor=color.white, size=size.tiny)
+// Higher-timeframe trend
+htfTF = timeframe.period == "1" ? "15" : timeframe.period == "5" ? "15" : timeframe.period == "15" ? "60" : timeframe.period == "60" ? "240" : "D"
+htfClose = request.security(syminfo.tickerid, htfTF, close,           lookahead=barmerge.lookahead_off)
+htfE200  = request.security(syminfo.tickerid, htfTF, ta.ema(close,200),lookahead=barmerge.lookahead_off)
+htfE20   = request.security(syminfo.tickerid, htfTF, ta.ema(close,20), lookahead=barmerge.lookahead_off)
+htfE50   = request.security(syminfo.tickerid, htfTF, ta.ema(close,50), lookahead=barmerge.lookahead_off)
+htfBull = htfClose > htfE200 and htfE20 > htfE50
+htfBear = htfClose < htfE200 and htfE20 < htfE50
 
-// ---------- Swing range (Fibonacci) ----------
-atr14 = ta.atr(14)
-hi    = ta.highest(high, swingLB)
-lo    = ta.lowest(low,  swingLB)
-rng   = hi - lo
+// Swing range (Fibonacci)
+hi  = ta.highest(high, swingLB)
+lo  = ta.lowest(low,  swingLB)
+rng = hi - lo
 
-// ---------- Gambar Entry / SL / TP1 / TP2 / TP3 tiap sinyal ----------
-var line  eL=na,  slL=na, t1L=na, t2L=na, t3L=na
-var label eB=na,  slB=na, t1B=na, t2B=na, t3B=na
+// ================= CONFIDENCE (0-100) =================
+trendBull = close > ema200 and ema20 > ema50
+trendBear = close < ema200 and ema20 < ema50
+htfOkBuy  = not useHTF or htfBull
+htfOkSell = not useHTF or htfBear
+diBull    = dip > dim
+diBear    = dim > dip
+rsiBuy    = rsiV >= 45 and rsiV <= 68
+rsiSell   = rsiV >= 32 and rsiV <= 55
+candBull  = close > open
+candBear  = close < open
+macdUp    = macdH > 0 and macdH > macdH[1]
+macdDn    = macdH < 0 and macdH < macdH[1]
+notExt    = math.abs(close - ema20) <= 1.4 * atr14
 
-f_clear() =>
+sBuy = (trendBull ? 20 : 0) + (htfOkBuy ? 18 : 0) + (diBull ? 16 : 0) + (adxV >= adxMin ? 12 : 0) + (rsiBuy ? 10 : 0) + (candBull ? 8 : 0) + (macdUp ? 8 : 0) + (notExt ? 8 : 0)
+sSell= (trendBear ? 20 : 0) + (htfOkSell ? 18 : 0) + (diBear ? 16 : 0) + (adxV >= adxMin ? 12 : 0) + (rsiSell ? 10 : 0) + (candBear ? 8 : 0) + (macdDn ? 8 : 0) + (notExt ? 8 : 0)
+// wajib: tren + HTF + DI searah, kalau tidak -> 0 (dianggap tidak yakin)
+confBuy  = (trendBull and htfOkBuy  and diBull) ? sBuy  : 0
+confSell = (trendBear and htfOkSell and diBear) ? sSell : 0
+
+// ================= LEVEL (Fibonacci) =================
+entry = close
+slBuy  = math.min(ta.lowest(low, 14),  entry - atr14) - 0.3 * atr14
+slSell = math.max(ta.highest(high, 14), entry + atr14) + 0.3 * atr14
+tp1B = entry + f1 * rng
+tp2B = entry + f2 * rng
+tp3B = entry + f3 * rng
+tp1S = entry - f1 * rng
+tp2S = entry - f2 * rng
+tp3S = entry - f3 * rng
+rrB = (tp1B - entry) / math.max(entry - slBuy, syminfo.mintick)
+rrS = (entry - tp1S) / math.max(slSell - entry, syminfo.mintick)
+
+barOk  = awaitBar ? barstate.isconfirmed : true
+goBuy  = buySig  and confBuy  >= confMin and rrB >= rrMin and barOk
+goSell = sellSig and confSell >= confMin and rrS >= rrMin and barOk
+
+// ================= STATE & GAMBAR =================
+var line  eL=na
+var line  slL=na
+var line  t1L=na
+var line  t2L=na
+var line  t3L=na
+var label eLab=na
+var label slLab=na
+var label t1Lab=na
+var label t2Lab=na
+var label t3Lab=na
+var box   rBox=na
+var box   gBox=na
+var bool  active=false
+var int   dir=0
+var float aSL=na
+var float aT3=na
+
+colE  = color.new(color.blue,  15)
+colSL = color.new(color.red,   15)
+colTP = color.new(color.green, 20)
+
+if goBuy or goSell
+    // hapus gambar lama
     line.delete(eL)
     line.delete(slL)
     line.delete(t1L)
     line.delete(t2L)
     line.delete(t3L)
-    label.delete(eB)
-    label.delete(slB)
-    label.delete(t1B)
-    label.delete(t2B)
-    label.delete(t3B)
+    label.delete(eLab)
+    label.delete(slLab)
+    label.delete(t1Lab)
+    label.delete(t2Lab)
+    label.delete(t3Lab)
+    box.delete(rBox)
+    box.delete(gBox)
+    // level sesuai arah
+    isB = goBuy
+    e  = entry
+    sl = isB ? slBuy : slSell
+    t1 = isB ? tp1B : tp1S
+    t2 = isB ? tp2B : tp2S
+    t3 = isB ? tp3B : tp3S
+    cf = isB ? confBuy : confSell
+    tag = (isB ? "BUY" : "SELL") + " conf " + str.tostring(cf) + "%"
+    x2 = bar_index + projLen
+    // garis
+    eL  := line.new(bar_index, e,  x2, e,  color=colE,  width=2)
+    slL := line.new(bar_index, sl, x2, sl, color=colSL, width=2)
+    t1L := line.new(bar_index, t1, x2, t1, color=colTP, width=1)
+    t2L := line.new(bar_index, t2, x2, t2, color=colTP, width=1)
+    t3L := line.new(bar_index, t3, x2, t3, color=colTP, width=1)
+    // label
+    eLab  := label.new(x2, e,  "Entry " + tag + "  " + str.tostring(e,  format.mintick), style=label.style_label_left, color=color.new(color.blue,0),  textcolor=color.white, size=size.small)
+    slLab := label.new(x2, sl, "SL "  + str.tostring(sl, format.mintick), style=label.style_label_left, color=color.new(color.red,0),   textcolor=color.white, size=size.small)
+    t1Lab := label.new(x2, t1, "TP1 " + str.tostring(t1, format.mintick), style=label.style_label_left, color=color.new(color.green,0), textcolor=color.white, size=size.small)
+    t2Lab := label.new(x2, t2, "TP2 " + str.tostring(t2, format.mintick), style=label.style_label_left, color=color.new(color.green,0), textcolor=color.white, size=size.small)
+    t3Lab := label.new(x2, t3, "TP3 " + str.tostring(t3, format.mintick), style=label.style_label_left, color=color.new(color.green,0), textcolor=color.white, size=size.small)
+    // blok zona transparan: merah SL->Entry, hijau Entry->TP3
+    if showZone
+        rBox := box.new(bar_index, math.max(e,sl), x2, math.min(e,sl), border_color=color.new(color.red,90),   bgcolor=color.new(color.red,88))
+        gBox := box.new(bar_index, math.max(e,t3), x2, math.min(e,t3), border_color=color.new(color.green,90), bgcolor=color.new(color.green,90))
+    // simpan state
+    active := true
+    dir := isB ? 1 : -1
+    aSL := sl
+    aT3 := t3
+    // notifikasi 24/7 (buat Alert -> "Any alert() function call")
+    alert("POETRA " + (isB?"BUY":"SELL") + " " + syminfo.ticker + " (" + timeframe.period + ")" + "\nEntry: " + str.tostring(e, format.mintick) + "\nSL: " + str.tostring(sl, format.mintick) + "\nTP1: " + str.tostring(t1, format.mintick) + "\nTP2: " + str.tostring(t2, format.mintick) + "\nTP3: " + str.tostring(t3, format.mintick) + "\nConfidence: " + str.tostring(cf) + "%", alert.freq_once_per_bar_close)
+else if active
+    hitSL  = dir == 1 ? low  <= aSL : high >= aSL
+    hitTP3 = dir == 1 ? high >= aT3 : low  <= aT3
+    flip   = dir == 1 ? sellSig : buySig
+    if hitSL or hitTP3 or flip
+        // siklus selesai -> hapus
+        line.delete(eL)
+        line.delete(slL)
+        line.delete(t1L)
+        line.delete(t2L)
+        line.delete(t3L)
+        label.delete(eLab)
+        label.delete(slLab)
+        label.delete(t1Lab)
+        label.delete(t2Lab)
+        label.delete(t3Lab)
+        box.delete(rBox)
+        box.delete(gBox)
+        active := false
+        dir := 0
+    else
+        // perpanjang mengikuti harga
+        x2b = bar_index + projLen
+        line.set_x2(eL,  x2b)
+        line.set_x2(slL, x2b)
+        line.set_x2(t1L, x2b)
+        line.set_x2(t2L, x2b)
+        line.set_x2(t3L, x2b)
+        label.set_x(eLab,  x2b)
+        label.set_x(slLab, x2b)
+        label.set_x(t1Lab, x2b)
+        label.set_x(t2Lab, x2b)
+        label.set_x(t3Lab, x2b)
+        if showZone and not na(rBox)
+            box.set_right(rBox, x2b)
+            box.set_right(gBox, x2b)
 
-trig = (buySignal or sellSignal) and (awaitBar ? barstate.isconfirmed : true)
+// EMA (sama seperti dashboard)
+plot(ema20,  "EMA20",  color=color.new(#ffd15c, 0), linewidth=1)
+plot(ema50,  "EMA50",  color=color.new(#2f8fff, 0), linewidth=1)
+plot(ema200, "EMA200", color=color.new(#ff4d6d, 0), linewidth=1)
 
-if showLbl and trig
-    f_clear()
-    x2    = bar_index + 40
-    isBuy = buySignal
-    entry = close
-    swLo  = ta.lowest(low, 14)
-    swHi  = ta.highest(high, 14)
-    sl    = isBuy ? math.min(swLo, entry - atr14) - 0.3 * atr14 : math.max(swHi, entry + atr14) + 0.3 * atr14
-    tp1   = isBuy ? entry + f1 * rng : entry - f1 * rng
-    tp2   = isBuy ? entry + f2 * rng : entry - f2 * rng
-    tp3   = isBuy ? entry + f3 * rng : entry - f3 * rng
-    tag   = isBuy ? 'BUY' : 'SELL'
-
-    eL  := line.new(bar_index, entry, x2, entry, color=color.blue, width=2)
-    slL := line.new(bar_index, sl,   x2, sl,   color=color.red,  width=2)
-    t1L := line.new(bar_index, tp1,  x2, tp1,  color=color.new(color.green, 0), width=1, style=line.style_dashed)
-    t2L := line.new(bar_index, tp2,  x2, tp2,  color=color.new(color.green, 0), width=1, style=line.style_dashed)
-    t3L := line.new(bar_index, tp3,  x2, tp3,  color=color.new(color.green, 0), width=1, style=line.style_dashed)
-
-    eB  := label.new(x2, entry, 'Entry ' + tag + '\n' + str.tostring(entry, format.mintick), style=label.style_label_left, color=color.blue, textcolor=color.white, size=size.small)
-    slB := label.new(x2, sl,   'SL '  + str.tostring(sl,  format.mintick), style=label.style_label_left, color=color.red,   textcolor=color.white, size=size.small)
-    t1B := label.new(x2, tp1,  'TP1 ' + str.tostring(tp1, format.mintick), style=label.style_label_left, color=color.green, textcolor=color.white, size=size.small)
-    t2B := label.new(x2, tp2,  'TP2 ' + str.tostring(tp2, format.mintick), style=label.style_label_left, color=color.green, textcolor=color.white, size=size.small)
-    t3B := label.new(x2, tp3,  'TP3 ' + str.tostring(tp3, format.mintick), style=label.style_label_left, color=color.green, textcolor=color.white, size=size.small)
-
-// ---------- EMA (sama seperti dashboard) ----------
-plot(ta.ema(close, 20),  'EMA20',  color=color.new(#ffd15c, 0), linewidth=1)
-plot(ta.ema(close, 50),  'EMA50',  color=color.new(#2f8fff, 0), linewidth=1)
-plot(ta.ema(close, 200), 'EMA200', color=color.new(#ff4d6d, 0), linewidth=1)
-
-// ---------- Alerts ----------
-await = awaitBar ? barstate.isconfirmed : true
-alertcondition(buySignal  and await, title='POETRA BUY',  message='POETRA BUY - Entry + TP1/TP2/TP3 (Fibonacci)')
-alertcondition(sellSignal and await, title='POETRA SELL', message='POETRA SELL - Entry + TP1/TP2/TP3 (Fibonacci)')
-alertcondition((buySignal or sellSignal) and await, title='POETRA Signal', message='POETRA sinyal baru!')
+// Alertcondition cadangan (berbasis kondisi)
+alertcondition(goBuy,  title="POETRA BUY (yakin)",  message="POETRA BUY - cek chart untuk Entry/SL/TP")
+alertcondition(goSell, title="POETRA SELL (yakin)", message="POETRA SELL - cek chart untuk Entry/SL/TP")
