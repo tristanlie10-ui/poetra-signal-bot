@@ -141,7 +141,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
   <div id="signalArea"><div class="grid" id="cards"></div></div>
 
   <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, kini +ADX/+DI/-DI (konfirmasi arah), filter tren HTF, konfirmasi candle close, anti-ngejar harga, SL berbasis struktur (swing/OB + buffer) & minimal Risk:Reward 1.5. Sinyal hanya keluar bila SEMUA syarat sejalan. Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
-  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.5 PRO — garis solid transparan sinyal→harga + blok zona risk/reward (merah SL, hijau TP), POC dihapus (terkunci)</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.6 PRO — sinyal auto-hilang saat kena SL/tembus TP3, muncul lagi di sinyal baru (terkunci)</div>
 </div>
 
 <script>
@@ -181,7 +181,9 @@ function computeTrade(d){var st=utStops(d.h,d.l,d.c,0.8,8);var n=d.c.length;var 
   var s0=Math.max(0,si-13);var res={buy:buy,bar:si,entry:entry};
   if(buy){var swLo=Math.min.apply(null,d.l.slice(s0,si+1));res.sl=Math.min(swLo,entry-a)-0.3*a;res.tp1=entry+0.618*rng;res.tp2=entry+1.0*rng;res.tp3=entry+1.618*rng;}
   else{var swHi=Math.max.apply(null,d.h.slice(s0,si+1));res.sl=Math.max(swHi,entry+a)+0.3*a;res.tp1=entry-0.618*rng;res.tp2=entry-1.0*rng;res.tp3=entry-1.618*rng;}
-  return res;}
+  /* auto-hapus: jika setelah sinyal harga sudah kena SL atau tembus TP3 (trade selesai) -> null (overlay hilang) sampai ada sinyal baru */
+  for(var j=si+1;j<n;j++){if(buy){if(d.l[j]<=res.sl||d.h[j]>=res.tp3){return null;}}else{if(d.h[j]>=res.sl||d.l[j]<=res.tp3){return null;}}}
+  res.done=false;return res;}
 function toggleSA(){SA_ON=!SA_ON;var b=document.getElementById('sabtn');
   if(b){b.textContent='🎯 Auto Entry+TP Fibo: '+(SA_ON?'ON':'OFF');b.classList.toggle('on',SA_ON);}
   try{localStorage.setItem('poetra_sa',SA_ON?'1':'0');}catch(e){}if(CMODE==='ut')loadUT();}
