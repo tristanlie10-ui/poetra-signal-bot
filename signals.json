@@ -1,109 +1,109 @@
 {
-  "updated": "2026-07-17 11:56 UTC",
+  "updated": "2026-07-17 13:18 UTC",
   "symbols": {
     "XAU/USD": {
       "M1": {
         "bias": "WAIT",
-        "conf": 28,
-        "price": 3997.8,
-        "rsi": 60.5,
-        "utbot": "SELL",
-        "utbot_fresh": "SELL",
-        "dir": "BULLISH",
-        "htf": "RANGING",
-        "adx": 15.8
+        "conf": 30,
+        "price": 3972.3,
+        "rsi": 53.5,
+        "utbot": "BUY",
+        "utbot_fresh": "",
+        "dir": "BEARISH",
+        "htf": "BEARISH",
+        "adx": 17.1
       },
       "M5": {
         "bias": "WAIT",
-        "conf": 20,
-        "price": 3997.8,
-        "rsi": 54.6,
+        "conf": 44,
+        "price": 3972.9,
+        "rsi": 39.5,
         "utbot": "BUY",
         "utbot_fresh": "",
-        "dir": "RANGING",
-        "htf": "RANGING",
-        "adx": 16.0
+        "dir": "BEARISH",
+        "htf": "BEARISH",
+        "adx": 37.3
       },
       "M15": {
         "bias": "WAIT",
-        "conf": 20,
-        "price": 3997.8,
-        "rsi": 53.6,
+        "conf": 44,
+        "price": 3972.9,
+        "rsi": 35.6,
         "utbot": "BUY",
-        "utbot_fresh": "",
-        "dir": "RANGING",
+        "utbot_fresh": "BUY",
+        "dir": "BEARISH",
         "htf": "BEARISH",
-        "adx": 15.6
+        "adx": 22.9
       }
     },
     "BTC/USD": {
       "M1": {
         "bias": "WAIT",
-        "conf": 34,
-        "price": 63350.0,
-        "rsi": 70.1,
-        "utbot": "BUY",
-        "utbot_fresh": "",
-        "dir": "BULLISH",
-        "htf": "BEARISH",
-        "adx": 49.5
-      },
-      "M5": {
-        "bias": "WAIT",
-        "conf": 20,
-        "price": 63350.0,
-        "rsi": 72.4,
-        "utbot": "BUY",
-        "utbot_fresh": "",
-        "dir": "RANGING",
-        "htf": "BEARISH",
-        "adx": 26.3
-      },
-      "M15": {
-        "bias": "WAIT",
-        "conf": 36,
-        "price": 63350.0,
-        "rsi": 60.6,
+        "conf": 44,
+        "price": 62886.0,
+        "rsi": 41.2,
         "utbot": "BUY",
         "utbot_fresh": "",
         "dir": "BEARISH",
         "htf": "BEARISH",
-        "adx": 28.0
+        "adx": 50.0
+      },
+      "M5": {
+        "bias": "WAIT",
+        "conf": 50,
+        "price": 62890.0,
+        "rsi": 35.1,
+        "utbot": "BUY",
+        "utbot_fresh": "BUY",
+        "dir": "BEARISH",
+        "htf": "BEARISH",
+        "adx": 28.5
+      },
+      "M15": {
+        "bias": "WAIT",
+        "conf": 44,
+        "price": 62890.0,
+        "rsi": 39.5,
+        "utbot": "SELL",
+        "utbot_fresh": "",
+        "dir": "BEARISH",
+        "htf": "BEARISH",
+        "adx": 24.6
       }
     },
     "ETH/USD": {
       "M1": {
         "bias": "WAIT",
-        "conf": 34,
-        "price": 1840.2,
-        "rsi": 51.9,
-        "utbot": "SELL",
-        "utbot_fresh": "",
-        "dir": "BULLISH",
-        "htf": "BEARISH",
-        "adx": 25.7
-      },
-      "M5": {
-        "bias": "WAIT",
-        "conf": 20,
-        "price": 1840.1,
-        "rsi": 59.3,
-        "utbot": "SELL",
-        "utbot_fresh": "",
-        "dir": "RANGING",
-        "htf": "BEARISH",
-        "adx": 20.9
-      },
-      "M15": {
-        "bias": "WAIT",
-        "conf": 26,
-        "price": 1840.1,
-        "rsi": 53.2,
+        "conf": 44,
+        "price": 1815.8,
+        "rsi": 38.3,
         "utbot": "BUY",
         "utbot_fresh": "",
         "dir": "BEARISH",
-        "htf": "RANGING",
-        "adx": 24.8
+        "htf": "BEARISH",
+        "adx": 52.7
+      },
+      "M5": {
+        "bias": "WAIT",
+        "conf": 44,
+        "price": 1815.8,
+        "rsi": 23.3,
+        "utbot": "SELL",
+        "utbot_fresh": "",
+        "dir": "BEARISH",
+        "htf": "BEARISH",
+        "adx": 36.8
+      },
+      "M15": {
+        "bias": "WAIT",
+        "conf": 44,
+        "price": 1815.8,
+        "rsi": 29.6,
+        "utbot": "SELL",
+        "utbot_fresh": "",
+        "dir": "BEARISH",
+        "htf": "BEARISH",
+        "adx": 27.8
       }
     }
   }
