@@ -1,109 +1,109 @@
 {
-  "updated": "2026-07-24 21:20 UTC",
+  "updated": "2026-07-24 22:32 UTC",
   "symbols": {
     "XAU/USD": {
       "M1": {
         "bias": "WAIT",
-        "conf": 26,
-        "price": 4053.7,
-        "rsi": 61.6,
-        "utbot": "BUY",
-        "utbot_fresh": "",
-        "dir": "BEARISH",
-        "htf": "RANGING",
-        "adx": 22.5
-      },
-      "M5": {
-        "bias": "WAIT",
-        "conf": 34,
-        "price": 4053.7,
-        "rsi": 45.8,
-        "utbot": "BUY",
-        "utbot_fresh": "",
-        "dir": "BEARISH",
-        "htf": "RANGING",
-        "adx": 20.9
-      },
-      "M15": {
-        "bias": "WAIT",
         "conf": 20,
         "price": 4053.7,
-        "rsi": 44.7,
+        "rsi": 44.4,
         "utbot": "SELL",
         "utbot_fresh": "",
         "dir": "RANGING",
+        "htf": "BEARISH",
+        "adx": 18.6
+      },
+      "M5": {
+        "bias": "WAIT",
+        "conf": 20,
+        "price": 4053.7,
+        "rsi": 54.4,
+        "utbot": "SELL",
+        "utbot_fresh": "",
+        "dir": "RANGING",
+        "htf": "BEARISH",
+        "adx": 12.2
+      },
+      "M15": {
+        "bias": "WAIT",
+        "conf": 28,
+        "price": 4053.7,
+        "rsi": 47.7,
+        "utbot": "BUY",
+        "utbot_fresh": "",
+        "dir": "BEARISH",
         "htf": "RANGING",
-        "adx": 19.0
+        "adx": 14.0
       }
     },
     "BTC/USD": {
       "M1": {
         "bias": "WAIT",
-        "conf": 38,
-        "price": 64151.4,
-        "rsi": 44.3,
-        "utbot": "SELL",
+        "conf": 34,
+        "price": 64190.0,
+        "rsi": 62.0,
+        "utbot": "BUY",
         "utbot_fresh": "",
-        "dir": "BEARISH",
+        "dir": "BULLISH",
         "htf": "BEARISH",
-        "adx": 17.4
+        "adx": 22.6
       },
       "M5": {
         "bias": "WAIT",
-        "conf": 38,
-        "price": 64151.4,
-        "rsi": 44.0,
-        "utbot": "SELL",
+        "conf": 30,
+        "price": 64190.0,
+        "rsi": 53.5,
+        "utbot": "BUY",
         "utbot_fresh": "",
         "dir": "BEARISH",
         "htf": "BEARISH",
-        "adx": 13.4
+        "adx": 16.8
       },
       "M15": {
         "bias": "WAIT",
-        "conf": 38,
-        "price": 64154.0,
-        "rsi": 43.9,
+        "conf": 30,
+        "price": 64190.0,
+        "rsi": 47.4,
         "utbot": "SELL",
         "utbot_fresh": "",
         "dir": "BEARISH",
         "htf": "BEARISH",
-        "adx": 19.5
+        "adx": 13.8
       }
     },
     "ETH/USD": {
       "M1": {
         "bias": "WAIT",
-        "conf": 38,
-        "price": 1859.2,
-        "rsi": 41.0,
-        "utbot": "SELL",
+        "conf": 20,
+        "price": 1860.0,
+        "rsi": 59.4,
+        "utbot": "BUY",
         "utbot_fresh": "",
-        "dir": "BEARISH",
+        "dir": "RANGING",
         "htf": "BEARISH",
-        "adx": 14.9
+        "adx": 14.2
       },
       "M5": {
         "bias": "WAIT",
-        "conf": 38,
-        "price": 1859.2,
-        "rsi": 40.0,
-        "utbot": "SELL",
+        "conf": 44,
+        "price": 1860.0,
+        "rsi": 49.8,
+        "utbot": "BUY",
         "utbot_fresh": "",
         "dir": "BEARISH",
         "htf": "BEARISH",
-        "adx": 18.1
+        "adx": 22.4
       },
       "M15": {
         "bias": "WAIT",
         "conf": 44,
-        "price": 1859.3,
-        "rsi": 42.1,
+        "price": 1860.0,
+        "rsi": 45.3,
         "utbot": "SELL",
         "utbot_fresh": "",
         "dir": "BEARISH",
         "htf": "BEARISH",
-        "adx": 28.5
+        "adx": 29.8
       }
     }
   }
