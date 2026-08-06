@@ -1,12 +1,82 @@
 {
-  "updated": "2026-08-06 06:30 UTC",
+  "updated": "2026-08-06 09:28 UTC",
   "symbols": {
     "XAU/USD": {
       "M1": {
         "bias": "WAIT",
+        "conf": 36,
+        "price": 4280.4,
+        "rsi": 54.5,
+        "utbot": "BUY",
+        "utbot_fresh": "BUY",
+        "dir": "BULLISH",
+        "htf": "BULLISH",
+        "adx": 23.6
+      },
+      "M5": {
+        "bias": "WAIT",
+        "conf": 44,
+        "price": 4280.4,
+        "rsi": 66.3,
+        "utbot": "BUY",
+        "utbot_fresh": "",
+        "dir": "BULLISH",
+        "htf": "BULLISH",
+        "adx": 29.1
+      },
+      "M15": {
+        "bias": "WAIT",
+        "conf": 38,
+        "price": 4280.4,
+        "rsi": 63.3,
+        "utbot": "BUY",
+        "utbot_fresh": "",
+        "dir": "BULLISH",
+        "htf": "BULLISH",
+        "adx": 19.9
+      }
+    },
+    "BTC/USD": {
+      "M1": {
+        "bias": "WAIT",
         "conf": 34,
-        "price": 4258.4,
-        "rsi": 41.8,
+        "price": 64788.2,
+        "rsi": 39.5,
+        "utbot": "SELL",
+        "utbot_fresh": "",
+        "dir": "BEARISH",
+        "htf": "BULLISH",
+        "adx": 26.5
+      },
+      "M5": {
+        "bias": "WAIT",
+        "conf": 30,
+        "price": 64788.3,
+        "rsi": 43.4,
+        "utbot": "SELL",
+        "utbot_fresh": "",
+        "dir": "BULLISH",
+        "htf": "BULLISH",
+        "adx": 18.1
+      },
+      "M15": {
+        "bias": "WAIT",
+        "conf": 38,
+        "price": 64788.3,
+        "rsi": 49.8,
+        "utbot": "SELL",
+        "utbot_fresh": "",
+        "dir": "BULLISH",
+        "htf": "BULLISH",
+        "adx": 16.6
+      }
+    },
+    "ETH/USD": {
+      "M1": {
+        "bias": "WAIT",
+        "conf": 34,
+        "price": 1908.6,
+        "rsi": 39.4,
         "utbot": "SELL",
         "utbot_fresh": "",
         "dir": "BEARISH",
@@ -15,95 +85,25 @@
       },
       "M5": {
         "bias": "WAIT",
-        "conf": 20,
-        "price": 4258.4,
-        "rsi": 42.5,
-        "utbot": "SELL",
-        "utbot_fresh": "",
-        "dir": "RANGING",
-        "htf": "BULLISH",
-        "adx": 23.2
-      },
-      "M15": {
-        "bias": "WAIT",
         "conf": 36,
-        "price": 4258.2,
-        "rsi": 45.1,
+        "price": 1908.7,
+        "rsi": 42.1,
         "utbot": "SELL",
         "utbot_fresh": "",
         "dir": "BULLISH",
         "htf": "BULLISH",
-        "adx": 25.3
-      }
-    },
-    "BTC/USD": {
-      "M1": {
-        "bias": "WAIT",
-        "conf": 20,
-        "price": 64815.8,
-        "rsi": 50.8,
-        "utbot": "SELL",
-        "utbot_fresh": "SELL",
-        "dir": "RANGING",
-        "htf": "BULLISH",
-        "adx": 23.0
-      },
-      "M5": {
-        "bias": "WAIT",
-        "conf": 44,
-        "price": 64815.8,
-        "rsi": 52.4,
-        "utbot": "BUY",
-        "utbot_fresh": "",
-        "dir": "BULLISH",
-        "htf": "BULLISH",
-        "adx": 31.8
+        "adx": 21.1
       },
       "M15": {
-        "bias": "WAIT",
-        "conf": 44,
-        "price": 64813.9,
-        "rsi": 57.4,
-        "utbot": "SELL",
-        "utbot_fresh": "",
-        "dir": "BULLISH",
-        "htf": "BULLISH",
-        "adx": 22.9
-      }
-    },
-    "ETH/USD": {
-      "M1": {
         "bias": "WAIT",
         "conf": 38,
-        "price": 1912.4,
-        "rsi": 51.6,
+        "price": 1907.8,
+        "rsi": 46.9,
         "utbot": "SELL",
         "utbot_fresh": "",
         "dir": "BULLISH",
         "htf": "BULLISH",
-        "adx": 19.1
-      },
-      "M5": {
-        "bias": "WAIT",
-        "conf": 44,
-        "price": 1912.4,
-        "rsi": 55.8,
-        "utbot": "BUY",
-        "utbot_fresh": "",
-        "dir": "BULLISH",
-        "htf": "BULLISH",
-        "adx": 43.9
-      },
-      "M15": {
-        "bias": "WAIT",
-        "conf": 44,
-        "price": 1912.4,
-        "rsi": 57.6,
-        "utbot": "SELL",
-        "utbot_fresh": "",
-        "dir": "BULLISH",
-        "htf": "BULLISH",
-        "adx": 22.8
+        "adx": 16.0
       }
     }
   }
