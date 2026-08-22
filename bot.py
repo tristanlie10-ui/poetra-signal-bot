@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-POETRA AI Signal Bot v9 — 24/7 Telegram (Binance keyless).
-AKURASI TINGGI: konfirmasi arah (ADX + DI), filter multi-timeframe (HTF),
-konfirmasi candle close, anti-chasing, SL berbasis struktur (swing/OB), min Risk:Reward.
-Fibonacci golden zone + EMA/RSI/MACD + UT Bot. Kirim entry hanya bila YAKIN.
+POETRA AI Signal Bot v10 — 24/7 Telegram (Binance keyless).
+GABUNGAN: UT Bot Alerts + Strategi 3 EMA (EMA8/EMA21/EMA125) untuk menentukan entry.
+AKURASI TINGGI: 3-EMA alignment (WAJIB) + konfirmasi arah (ADX + DI) + filter multi-timeframe (HTF)
++ pullback ke area EMA + konfirmasi candle close + anti-chasing + SL berbasis struktur + min Risk:Reward.
+Semua timeframe: M1, M5, M15, M30, H1, H4. Kirim entry hanya bila YAKIN.
 Lacak trade -> balas "✅ DONE 100%" saat TP1, "❌ kena SL" saat SL.
 ENV: TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, SYMBOLS (default XAU/USD,BTC/USD,ETH/USD),
      MIN_CONFIDENCE (default 82), SEND_WAIT.
@@ -16,8 +17,10 @@ TG_CHAT  = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 SYMBOLS  = [s.strip() for s in (os.environ.get("SYMBOLS") or "XAU/USD,BTC/USD,ETH/USD").split(",") if s.strip()]
 MIN_CONF = float(os.environ.get("MIN_CONFIDENCE") or "82")
 SEND_WAIT = (os.environ.get("SEND_WAIT") or "0") == "1"
-TIMEFRAMES = [("M1", "1m"), ("M5", "5m"), ("M15", "15m")]
-HTF = {"1m":"15m","5m":"15m","15m":"1h","1h":"4h"}
+# SEMUA TIMEFRAME
+TIMEFRAMES = [("M1","1m"),("M5","5m"),("M15","15m"),("M30","30m"),("H1","1h"),("H4","4h")]
+TF_NAMES = [t[0] for t in TIMEFRAMES]
+HTF = {"1m":"15m","5m":"15m","15m":"1h","30m":"2h","1h":"4h","4h":"1d"}
 OPEN_FILE = "open_trades.json"
 
 BINMAP = {"XAU/USD":"PAXGUSDT","XAUUSD":"PAXGUSDT","GOLD":"PAXGUSDT",
@@ -137,43 +140,48 @@ def htf_bias(symbol, interval):
 
 def analyze(symbol, interval):
     o,h,l,c = fetch_ohlc(symbol, interval, 300)
-    if len(c) < 90: return {"bias":"WAIT","conf":0,"utbot":"-","rsi":"-","dir":"RANGING"}
+    if len(c) < 130: return {"bias":"WAIT","conf":0,"utbot":"-","rsi":"-","dir":"RANGING","ema3":"-"}
     e20,e50,e200=ema(c,20),ema(c,50),ema(c,200); r=rsi(c,14); mh=macd_hist(c); a=atr(h,l,c,14)
+    e8,e21,e125=ema(c,8),ema(c,21),ema(c,125)          # STRATEGI 3 EMA (video)
     sf=swing_fib(h,l,80); ub=utbot(h,l,c); adx,pdi,mdi=adx_di(h,l,c,14); px=c[-1]
     htf=htf_bias(symbol, interval)
     gz_lo=min(sf["l618"],sf["l705"]); gz_hi=max(sf["l618"],sf["l705"])
     in_gold=(gz_lo-a[-1]*0.6)<=px<=(gz_hi+a[-1]*0.6)
     ema_bull=px>e200[-1] and e20[-1]>e50[-1]; ema_bear=px<e200[-1] and e20[-1]<e50[-1]
+    # ===== 3-EMA CHECKLIST (EMA8/EMA21/EMA125) — WAJIB untuk entry =====
+    ema3_bull = px>e125[-1] and e8[-1]>e21[-1]         # harga>EMA125 & EMA8>EMA21
+    ema3_bear = px<e125[-1] and e8[-1]<e21[-1]
+    pull_buy  = min(l[-3:]) <= max(e8[-1],e21[-1])+0.5*a[-1]   # tunggu pullback ke area EMA
+    pull_sell = max(h[-3:]) >= min(e8[-1],e21[-1])-0.5*a[-1]
     dr="BULLISH" if ema_bull else ("BEARISH" if ema_bear else "RANGING")
     m_up=mh[-1]>0 and mh[-1]>mh[-2]; m_dn=mh[-1]<0 and mh[-1]<mh[-2]
     r_buy=48<=r[-1]<=66; r_sell=34<=r[-1]<=52
     di_bull=pdi[-1]>mdi[-1]; di_bear=mdi[-1]>pdi[-1]; adx_ok=adx[-1]>=20
     candle_bull=c[-1]>o[-1]; candle_bear=c[-1]<o[-1]
-    not_ext=abs(px-e20[-1])<=1.4*a[-1]           # jangan ngejar harga terlalu jauh dari EMA20
-    # swing struktur utk SL
+    not_ext=abs(px-e20[-1])<=1.6*a[-1]
     sw_lo=min(l[-14:]); sw_hi=max(h[-14:])
     bias,conf="WAIT",0
-    # SYARAT WAJIB BUY: EMA bull + HTF bull + DI bull + UT Bot BUY + golden zone + ADX kuat + candle bullish + tidak overextended + RSI sehat
-    if ema_bull and htf=="BULLISH" and di_bull and ub["pos"]=="BUY" and in_gold and adx_ok and candle_bull and not_ext and r_buy:
-        conf=60+(12 if m_up else 0)+(10 if adx[-1]>=25 else 0)+(8 if ub["fresh"]=="BUY" else 0)+(6 if (pdi[-1]-mdi[-1])>=8 else 0)
+    # SYARAT WAJIB BUY: 3-EMA bull + UT Bot BUY + EMA(20/50/200) bull + HTF bull + DI bull + golden zone + ADX kuat + candle bullish + tidak overextended + RSI sehat
+    if ema3_bull and ub["pos"]=="BUY" and ema_bull and htf=="BULLISH" and di_bull and in_gold and adx_ok and candle_bull and not_ext and r_buy:
+        conf=58+(12 if m_up else 0)+(10 if adx[-1]>=25 else 0)+(8 if ub["fresh"]=="BUY" else 0)+(6 if (pdi[-1]-mdi[-1])>=8 else 0)+(6 if pull_buy else 0)
         bias="BUY"
-    elif ema_bear and htf=="BEARISH" and di_bear and ub["pos"]=="SELL" and in_gold and adx_ok and candle_bear and not_ext and r_sell:
-        conf=60+(12 if m_dn else 0)+(10 if adx[-1]>=25 else 0)+(8 if ub["fresh"]=="SELL" else 0)+(6 if (mdi[-1]-pdi[-1])>=8 else 0)
+    elif ema3_bear and ub["pos"]=="SELL" and ema_bear and htf=="BEARISH" and di_bear and in_gold and adx_ok and candle_bear and not_ext and r_sell:
+        conf=58+(12 if m_dn else 0)+(10 if adx[-1]>=25 else 0)+(8 if ub["fresh"]=="SELL" else 0)+(6 if (mdi[-1]-pdi[-1])>=8 else 0)+(6 if pull_sell else 0)
         bias="SELL"
     else:
-        # skor perkiraan (utk info) tanpa entry
         base=20
-        if ema_bull: base+= (10 if htf=="BULLISH" else 0)+(8 if di_bull else 0)+(6 if in_gold else 0)+(6 if adx_ok else 0)
-        elif ema_bear: base+= (10 if htf=="BEARISH" else 0)+(8 if di_bear else 0)+(6 if in_gold else 0)+(6 if adx_ok else 0)
+        if ema3_bull: base+=(12 if ub["pos"]=="BUY" else 0)+(8 if htf=="BULLISH" else 0)+(6 if di_bull else 0)+(6 if in_gold else 0)
+        elif ema3_bear: base+=(12 if ub["pos"]=="SELL" else 0)+(8 if htf=="BEARISH" else 0)+(6 if di_bear else 0)+(6 if in_gold else 0)
         conf=base
     res={"bias":bias,"conf":int(min(conf,98)),"price":rnd(px),"rsi":round(r[-1],1),"utbot":ub["pos"],
-         "utbot_fresh":ub["fresh"],"dir":dr,"htf":htf,"adx":round(adx[-1],1)}
+         "utbot_fresh":ub["fresh"],"dir":dr,"htf":htf,"adx":round(adx[-1],1),
+         "ema3":("BULL" if ema3_bull else ("BEAR" if ema3_bear else "-"))}
     if bias in ("BUY","SELL"):
         buf=0.4*a[-1]
         if bias=="BUY":
-            sl=min(sw_lo, gz_lo)-buf                 # SL di BAWAH struktur (swing low / golden zone) + buffer
+            sl=min(sw_lo, gz_lo)-buf
             risk=px-sl
-            tp1=max(sf["hi"], px+1.8*risk)           # TP minimal 1.8R atau swing high (mana lebih jauh)
+            tp1=max(sf["hi"], px+1.8*risk)
             tp2=px+3.0*risk
         else:
             sl=max(sw_hi, gz_hi)+buf
@@ -181,7 +189,7 @@ def analyze(symbol, interval):
             tp1=min(sf["lo"], px-1.8*risk)
             tp2=px-3.0*risk
         rr=abs(tp1-px)/max(abs(px-sl),1e-9)
-        if rr<1.5:                                    # buang setup RR jelek
+        if rr<1.5:
             res["bias"]="WAIT"; res["conf"]=min(res["conf"],70)
             return res
         res.update(entry=rnd(px), sl=rnd(sl), tp1=rnd(tp1), tp2=rnd(tp2), rr=round(rr,1))
@@ -190,30 +198,30 @@ def analyze(symbol, interval):
     return res
 
 def fmt_symbol(symbol, tf_res):
-    price=next((tf_res[k]["price"] for k in ("M15","M5","M1") if tf_res.get(k,{}).get("price")),"-")
-    L=["\U0001F4CA <b>%s — Sinyal Multi-Timeframe</b>"%symbol,"Harga saat ini: <b>%s</b>"%price,"━"*12]
+    price=next((tf_res[k]["price"] for k in reversed(TF_NAMES) if tf_res.get(k,{}).get("price")),"-")
+    L=["\U0001F4CA <b>%s — Sinyal Semua Timeframe</b>"%symbol,"Harga saat ini: <b>%s</b>"%price,"━"*12]
     best=None
-    for tf in ("M1","M5","M15"):
+    for tf in TF_NAMES:
         d=tf_res.get(tf,{}); b=d.get("bias","WAIT")
         emo="\U0001F7E2" if b=="BUY" else ("\U0001F534" if b=="SELL" else "⏸️")
         if b in ("BUY","SELL"):
-            L.append("%s <b>%s — %s</b> · keyakinan <b>%s%%</b> · UT Bot: %s · HTF %s · ADX %s"%(emo,tf,b,d.get("conf"),d.get("utbot"),d.get("htf"),d.get("adx")))
-            L.append("     Entry: %s"%d.get("entry")); L.append("     Stop Loss: %s (di bawah/atas struktur)"%d.get("sl"))
+            L.append("%s <b>%s — %s</b> · keyakinan <b>%s%%</b> · UT Bot %s · 3EMA %s · HTF %s · ADX %s"%(emo,tf,b,d.get("conf"),d.get("utbot"),d.get("ema3"),d.get("htf"),d.get("adx")))
+            L.append("     Entry: %s"%d.get("entry")); L.append("     Stop Loss: %s"%d.get("sl"))
             L.append("     TP1: %s (+%s%%)   TP2: %s (+%s%%)"%(d.get("tp1"),d.get("tp1pct"),d.get("tp2"),d.get("tp2pct")))
             if best is None or d.get("conf",0)>best[1]: best=(tf,d.get("conf",0),b,d)
         else:
-            L.append("%s <b>%s — WAIT</b> · keyakinan %s%% · UT Bot: %s (RSI %s · HTF %s)"%(emo,tf,d.get("conf","-"),d.get("utbot","-"),d.get("rsi","-"),d.get("htf","-")))
+            L.append("%s <b>%s — WAIT</b> · %s%% · UT Bot %s · 3EMA %s (RSI %s · HTF %s)"%(emo,tf,d.get("conf","-"),d.get("utbot","-"),d.get("ema3","-"),d.get("rsi","-"),d.get("htf","-")))
     L.append("━"*12)
     if best:
         tf,cf,bb,d=best
         L.append("\U0001F3AF <b>REKOMENDASI ENTRY: %s %s (%s)</b>"%(bb,tf,symbol))
-        L.append("Keyakinan analisa: <b>%s%%</b> · Risk:Reward %s · konfirmasi arah (ADX %s, HTF %s)"%(cf,d.get("rr"),d.get("adx"),d.get("htf")))
+        L.append("Keyakinan: <b>%s%%</b> · R:R %s · 3EMA %s · UT Bot %s · ADX %s · HTF %s"%(cf,d.get("rr"),d.get("ema3"),d.get("utbot"),d.get("adx"),d.get("htf")))
         L.append("Entry %s | SL %s | TP1 %s | TP2 %s"%(d.get("entry"),d.get("sl"),d.get("tp1"),d.get("tp2")))
-        L.append("Entry saat candle konfirmasi searah. Bila TP tercapai, sinyal ini dibalas otomatis: ✅ DONE 100%.")
+        L.append("Entry saat candle konfirmasi searah. Bila TP tercapai, dibalas otomatis: ✅ DONE 100%.")
     else:
-        L.append("⏸️ <b>Belum ada setup akurasi tinggi (≥%d%%).</b> Arah/HTF/ADX/golden-zone belum sepakat — jangan paksa entry."%int(MIN_CONF))
+        L.append("⏸️ <b>Belum ada setup akurasi tinggi.</b> UT Bot + 3EMA + HTF/ADX/golden-zone belum sepakat — jangan paksa entry.")
     L.append("━"*12)
-    L.append("Metode: Fibonacci golden-zone + Multi-Timeframe + ADX/DI (arah) + UT Bot + EMA/RSI/MACD + SL struktur.")
+    L.append("Metode: UT Bot + Strategi 3 EMA (8/21/125) + Fibonacci golden-zone + Multi-Timeframe + ADX/DI + SL struktur.")
     L.append("⚠️ Bukan nasihat keuangan. Maksimal 1% risiko/trade, selalu pasang Stop Loss.")
     return "\n".join(L)
 
@@ -280,7 +288,7 @@ def main():
                 resp=send_telegram(fmt_symbol(sym,tf_res))
                 mid=(resp or {}).get("result",{}).get("message_id")
                 best=None
-                for tf in ("M15","M5","M1"):
+                for tf in reversed(TF_NAMES):
                     d=tf_res.get(tf,{})
                     if d.get("bias") in ("BUY","SELL") and (best is None or d.get("conf",0)>best[1]): best=(tf,d.get("conf",0),d)
                 if best and mid:

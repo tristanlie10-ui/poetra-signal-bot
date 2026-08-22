@@ -124,7 +124,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
       <div class="ptitle"><h2 id="utname">XAUUSD · UT Bot</h2><div class="pxwrap"><div class="px" id="utpx">—</div><div class="cd" id="utcd">⏱ --:--</div></div></div>
       <div class="sarow"><button class="satog on" id="sabtn" onclick="toggleSA()">🎯 Auto Entry+TP Fibo: ON</button><span class="sahint">Setiap sinyal UT Bot → Entry · SL · TP1 · TP2 · TP3 otomatis (proyeksi Fibonacci 0.618 / 1.0 / 1.618)</span></div>
       <div id="utchart"></div>
-      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA20 <span class="dot" style="background:#2f8fff"></span>EMA50 <span class="dot" style="background:#ff4d6d"></span>EMA200 · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView) · 🎯 Auto (UT Bot + Fibonacci): <span style="color:#2f80ff">━ Entry</span> / <span style="color:#ff3b3b">━ SL</span> / <span style="color:#25e6a8">━ TP1/TP2/TP3</span> · garis Entry/SL/TP ditarik dari bar sinyal ke kanan (tidak menembus ke kiri) · POC/OB/FVG garis tipis tanpa label (biar rapi)</div>
+      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA8 <span class="dot" style="background:#2f8fff"></span>EMA21 <span class="dot" style="background:#ff4d6d"></span>EMA125 <b>(Strategi 3 EMA)</b> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView) · 🎯 Auto (UT Bot + Fibonacci): <span style="color:#2f80ff">━ Entry</span> / <span style="color:#ff3b3b">━ SL</span> / <span style="color:#25e6a8">━ TP1/TP2/TP3</span> · garis Entry/SL/TP ditarik dari bar sinyal ke kanan (tidak menembus ke kiri) · POC/OB/FVG garis tipis tanpa label (biar rapi)</div>
     </div>
   </div>
 
@@ -141,7 +141,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
   <div id="signalArea"><div class="grid" id="cards"></div></div>
 
   <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, kini +ADX/+DI/-DI (konfirmasi arah), filter tren HTF, konfirmasi candle close, anti-ngejar harga, SL berbasis struktur (swing/OB + buffer) & minimal Risk:Reward 1.5. Sinyal hanya keluar bila SEMUA syarat sejalan. Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
-  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.6 PRO — sinyal auto-hilang saat kena SL/tembus TP3, muncul lagi di sinyal baru (terkunci)</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.7 PRO — Strategi 3 EMA (8/21/125) + UT Bot untuk entry, sinkron bot Telegram semua timeframe (terkunci)</div>
 </div>
 
 <script>
@@ -177,6 +177,9 @@ function lastOB(o,h,l,c){for(var i=c.length-3;i>=1;i--){/* bullish OB: candle tu
 function computeTrade(d){var st=utStops(d.h,d.l,d.c,0.8,8);var n=d.c.length;var si=-1,buy=false;
   for(var i=n-1;i>=1;i--){var b=d.c[i]>st[i]&&d.c[i-1]<=st[i-1];var se=d.c[i]<st[i]&&d.c[i-1]>=st[i-1];if(b||se){si=i;buy=b;break;}}
   if(si<0)return null;
+  var _e8=ema(d.c,8),_e21=ema(d.c,21),_e125=ema(d.c,125);
+  var ok3=buy?(d.c[si]>_e125[si]&&_e8[si]>_e21[si]):(d.c[si]<_e125[si]&&_e8[si]<_e21[si]);
+  if(!ok3)return null;   /* WAJIB: 3-EMA (8/21/125) searah dengan sinyal UT Bot */
   var sf=swingFib(d.h,d.l,80);var a=atr(d.h,d.l,d.c,14)[n-1]||0;var entry=d.c[si];var rng=(sf.rng&&sf.rng>a?sf.rng:a*4);
   var s0=Math.max(0,si-13);var res={buy:buy,bar:si,entry:entry};
   if(buy){var swLo=Math.min.apply(null,d.l.slice(s0,si+1));res.sl=Math.min(swLo,entry-a)-0.3*a;res.tp1=entry+0.618*rng;res.tp2=entry+1.0*rng;res.tp3=entry+1.618*rng;}
@@ -204,6 +207,7 @@ function analyze(o,h,l,c,v,htf){
   htf=htf||"RANGING";
   var i=c.length-1,px=c[i];
   var e20=ema(c,20),e50=ema(c,50),e200=ema(c,200),r=rsiArr(c,14),mh=macdHist(c),a=atr(h,l,c,14);
+  var e8=ema(c,8),e21=ema(c,21),e125=ema(c,125);var ema3Bull=px>e125[i]&&e8[i]>e21[i],ema3Bear=px<e125[i]&&e8[i]<e21[i];
   var sf=swingFib(h,l,80),ub=utbot(h,l,c);
   var gzLo=Math.min(sf.l618,sf.l705),gzHi=Math.max(sf.l618,sf.l705);
   var inGold=px>=gzLo-a[i]*0.6 && px<=gzHi+a[i]*0.6;
@@ -218,12 +222,12 @@ function analyze(o,h,l,c,v,htf){
   var notExt=Math.abs(px-e20[i])<=1.4*a[i];
   var swLo=Math.min.apply(null,l.slice(-14)), swHi=Math.max.apply(null,h.slice(-14));
   var conf=0,bias="WAIT";
-  if(bull&&htf==="BULLISH"&&diBull&&ub.pos==="BUY"&&inGold&&adxOk&&candBull&&notExt&&rBuy){
+  if(ema3Bull&&bull&&htf==="BULLISH"&&diBull&&ub.pos==="BUY"&&inGold&&adxOk&&candBull&&notExt&&rBuy){
     conf=60+(mUp?12:0)+(adx>=25?10:0)+(ub.fresh==="BUY"?8:0)+((pdi-mdi)>=8?6:0);bias="BUY";}
-  else if(bear&&htf==="BEARISH"&&diBear&&ub.pos==="SELL"&&inGold&&adxOk&&candBear&&notExt&&rSell){
+  else if(ema3Bear&&bear&&htf==="BEARISH"&&diBear&&ub.pos==="SELL"&&inGold&&adxOk&&candBear&&notExt&&rSell){
     conf=60+(mDn?12:0)+(adx>=25?10:0)+(ub.fresh==="SELL"?8:0)+((mdi-pdi)>=8?6:0);bias="SELL";}
   else{conf=20+(inGold?8:0)+(adxOk?6:0);}
-  var res={bias:bias,conf:Math.min(conf,98)|0,price:px,rsi:Math.round(r[i]*10)/10,utbot:ub.pos,utbot_fresh:ub.fresh,dir:dir,gzLo:gzLo,gzHi:gzHi,poc:poc,ob:ob,fvg:fvg,atr:a[i],adx:Math.round(adx),pdi:Math.round(pdi),mdi:Math.round(mdi),htf:htf};
+  var res={bias:bias,conf:Math.min(conf,98)|0,price:px,rsi:Math.round(r[i]*10)/10,utbot:ub.pos,utbot_fresh:ub.fresh,dir:dir,gzLo:gzLo,gzHi:gzHi,poc:poc,ob:ob,fvg:fvg,atr:a[i],adx:Math.round(adx),pdi:Math.round(pdi),mdi:Math.round(mdi),htf:htf,ema3:(ema3Bull?"BULL":(ema3Bear?"BEAR":"-"))};
   var buf=0.5*a[i];
   if(bias==="BUY"){res.entry=px;res.sl=Math.min(swLo,gzLo,(ob&&ob.type==="BULL")?ob.bot:1e18)-buf;var rk=px-res.sl;res.tp1=Math.max(sf.hi,px+1.8*rk);res.tp2=px+3.0*rk;}
   else if(bias==="SELL"){res.entry=px;res.sl=Math.max(swHi,gzHi,(ob&&ob.type==="BEAR")?ob.top:-1e18)+buf;var rk=res.sl-px;res.tp1=Math.min(sf.lo,px-1.8*rk);res.tp2=px-3.0*rk;}
@@ -287,7 +291,7 @@ function clearLines(){plLines.forEach(function(pl){try{ucs.removePriceLine(pl);}
 function addLine(price,color,title,style,lbl){try{plLines.push(ucs.createPriceLine({price:price,color:color,lineWidth:1,lineStyle:(style==null?2:style),axisLabelVisible:(lbl!==false),title:title||""}));}catch(e){}}
 async function loadUT(){if(!SIGNALS_OK){document.getElementById("utpx").textContent="chart TradingView";return;}
   if(!utReady)initUT();
-  try{var d=await klines(SYM,TF,300);var cd=[],e20=[],e50=[],e200=[];var ec20=ema(d.c,20),ec50=ema(d.c,50),ec200=ema(d.c,200);
+  try{var d=await klines(SYM,TF,300);var cd=[],e20=[],e50=[],e200=[];var ec20=ema(d.c,8),ec50=ema(d.c,21),ec200=ema(d.c,125);
     for(var i=0;i<d.t.length;i++){cd.push({time:d.t[i],open:d.o[i],high:d.h[i],low:d.l[i],close:d.c[i]});e20.push({time:d.t[i],value:ec20[i]});e50.push({time:d.t[i],value:ec50[i]});e200.push({time:d.t[i],value:ec200[i]});}
     ucs.setData(cd);ul20.setData(e20);ul50.setData(e50);ul200.setData(e200);
     var st=utStops(d.h,d.l,d.c,0.8,8);var mk=[];
@@ -344,7 +348,10 @@ async function screenNow(force){var b1=document.getElementById("ref1");b1.classL
     var obtxt=res.ob?(res.ob.type+" "+fmt(res.ob.bot)+"–"+fmt(res.ob.top)):"-";
     var htfc=res.htf==="BULLISH"?dcls("BULLISH"):(res.htf==="BEARISH"?dcls("BEARISH"):"v");
     var adxc=(res.adx>=25)?'#25e6a8':((res.adx>=20)?'#ffd15c':'#ff6b85');
-    var rows='<div class="row"><span class="k">Arah (Fibo)</span><span class="'+dcls(res.dir)+'">'+arrow+' '+res.dir+'</span></div>'+
+    var e3c=res.ema3==="BULL"?dcls("BULLISH"):(res.ema3==="BEAR"?dcls("BEARISH"):"v");
+    var e3t=res.ema3==="BULL"?"BULLISH ▲ (8>21, >125)":(res.ema3==="BEAR"?"BEARISH ▼ (8<21, <125)":"belum sejajar");
+    var rows='<div class="row"><span class="k">3 EMA (8/21/125)</span><span class="'+e3c+'">'+e3t+'</span></div>'+
+             '<div class="row"><span class="k">Arah (Fibo)</span><span class="'+dcls(res.dir)+'">'+arrow+' '+res.dir+'</span></div>'+
              '<div class="row"><span class="k">Tren HTF</span><span class="'+htfc+'">'+(res.htf||'-')+'</span></div>'+
              '<div class="row"><span class="k">ADX / +DI:-DI</span><span class="v" style="color:'+adxc+'">'+(res.adx||'-')+' · '+(res.pdi||'-')+':'+(res.mdi||'-')+'</span></div>'+
              '<div class="row"><span class="k">Golden Zone</span><span class="v">'+fmt(res.gzLo)+' – '+fmt(res.gzHi)+'</span></div>'+

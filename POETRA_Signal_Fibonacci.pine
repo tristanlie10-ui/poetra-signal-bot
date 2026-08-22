@@ -45,6 +45,11 @@ showZone = input.bool(true, "Blok zona SL/TP (transparan)", group=gV)
 ema20  = ta.ema(close, 20)
 ema50  = ta.ema(close, 50)
 ema200 = ta.ema(close, 200)
+ema8   = ta.ema(close, 8)
+ema21  = ta.ema(close, 21)
+ema125 = ta.ema(close, 125)
+ema3Bull = close > ema125 and ema8 > ema21   // Strategi 3 EMA: harga>EMA125 & EMA8>EMA21
+ema3Bear = close < ema125 and ema8 < ema21
 rsiV   = ta.rsi(close, 14)
 atr14  = ta.atr(14)
 [macdL, macdSig, macdH] = ta.macd(close, 12, 26, 9)
@@ -95,8 +100,9 @@ notExt    = math.abs(close - ema20) <= 1.4 * atr14
 sBuy = (trendBull ? 20 : 0) + (htfOkBuy ? 18 : 0) + (diBull ? 16 : 0) + (adxV >= adxMin ? 12 : 0) + (rsiBuy ? 10 : 0) + (candBull ? 8 : 0) + (macdUp ? 8 : 0) + (notExt ? 8 : 0)
 sSell= (trendBear ? 20 : 0) + (htfOkSell ? 18 : 0) + (diBear ? 16 : 0) + (adxV >= adxMin ? 12 : 0) + (rsiSell ? 10 : 0) + (candBear ? 8 : 0) + (macdDn ? 8 : 0) + (notExt ? 8 : 0)
 // wajib: tren + HTF + DI searah, kalau tidak -> 0 (dianggap tidak yakin)
-confBuy  = (trendBull and htfOkBuy  and diBull) ? sBuy  : 0
-confSell = (trendBear and htfOkSell and diBear) ? sSell : 0
+// WAJIB: 3-EMA searah + tren + HTF + DI. Kalau tidak -> 0 (tidak yakin, tidak entry)
+confBuy  = (ema3Bull and trendBull and htfOkBuy  and diBull) ? sBuy  : 0
+confSell = (ema3Bear and trendBear and htfOkSell and diBear) ? sSell : 0
 
 // ================= LEVEL (Fibonacci) =================
 entry = close
@@ -183,7 +189,7 @@ if goBuy or goSell
     aSL := sl
     aT3 := t3
     // notifikasi 24/7 (buat Alert -> "Any alert() function call")
-    alert("POETRA " + (isB?"BUY":"SELL") + " " + syminfo.ticker + " (" + timeframe.period + ")" + "\nEntry: " + str.tostring(e, format.mintick) + "\nSL: " + str.tostring(sl, format.mintick) + "\nTP1: " + str.tostring(t1, format.mintick) + "\nTP2: " + str.tostring(t2, format.mintick) + "\nTP3: " + str.tostring(t3, format.mintick) + "\nConfidence: " + str.tostring(cf) + "%", alert.freq_once_per_bar_close)
+    alert("POETRA " + (isB?"BUY":"SELL") + " " + syminfo.ticker + " (" + timeframe.period + ")" + "\nEntry: " + str.tostring(e, format.mintick) + "\nSL: " + str.tostring(sl, format.mintick) + "\nTP1: " + str.tostring(t1, format.mintick) + "\nTP2: " + str.tostring(t2, format.mintick) + "\nTP3: " + str.tostring(t3, format.mintick) + "\nConfidence: " + str.tostring(cf) + "%\nKonfirmasi: UT Bot + 3 EMA (8/21/125)", alert.freq_once_per_bar_close)
 else if active
     hitSL  = dir == 1 ? low  <= aSL : high >= aSL
     hitTP3 = dir == 1 ? high >= aT3 : low  <= aT3
@@ -221,10 +227,10 @@ else if active
             box.set_right(rBox, x2b)
             box.set_right(gBox, x2b)
 
-// EMA (sama seperti dashboard)
-plot(ema20,  "EMA20",  color=color.new(#ffd15c, 0), linewidth=1)
-plot(ema50,  "EMA50",  color=color.new(#2f8fff, 0), linewidth=1)
-plot(ema200, "EMA200", color=color.new(#ff4d6d, 0), linewidth=1)
+// EMA — Strategi 3 EMA (8 / 21 / 125)
+plot(ema8,   "EMA 8",   color=color.new(#ffd15c, 0), linewidth=1)
+plot(ema21,  "EMA 21",  color=color.new(#2f8fff, 0), linewidth=1)
+plot(ema125, "EMA 125", color=color.new(#ff4d6d, 0), linewidth=2)
 
 // Alertcondition cadangan (berbasis kondisi)
 alertcondition(goBuy,  title="POETRA BUY (yakin)",  message="POETRA BUY - cek chart untuk Entry/SL/TP")
