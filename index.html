@@ -104,9 +104,9 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
     <button class="chip symbtn" data-tv="BINANCE:BNBUSDT" data-bn="BNBUSDT" data-name="BNB" data-dig="2">BNB</button>
     <input id="symsearch" placeholder="cari simbol lain…" onkeydown="if(event.key==='Enter')doSearch()">
     <span class="glabel" style="margin-left:8px;">TF:</span>
-    <button class="chip tfbtn" data-i="1m" data-tv="1">M1</button>
+    <button class="chip tfbtn active" data-i="1m" data-tv="1">M1</button>
     <button class="chip tfbtn" data-i="5m" data-tv="5">M5</button>
-    <button class="chip tfbtn active" data-i="15m" data-tv="15">M15</button>
+    <button class="chip tfbtn" data-i="15m" data-tv="15">M15</button>
     <button class="chip tfbtn" data-i="1h" data-tv="60">H1</button>
     <span class="clock" id="clock">●  --:--:--</span>
   </div>
@@ -141,7 +141,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
   <div id="signalArea"><div class="grid" id="cards"></div></div>
 
   <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, kini +ADX/+DI/-DI (konfirmasi arah), filter tren HTF, konfirmasi candle close, anti-ngejar harga, SL berbasis struktur (swing/OB + buffer) & minimal Risk:Reward 1.5. Sinyal hanya keluar bila SEMUA syarat sejalan. Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
-  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.8 PRO — + VWAP (anchor Session, hlc3, band deviasi) di chart; fitur 3 EMA/UT Bot/Fibonacci tetap (terkunci)</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.9 PRO — default timeframe M1 (sinyal buy/sell + SL + TP1/2/3 langsung tampil); VWAP + 3 EMA + UT Bot + Fibonacci tetap (terkunci)</div>
 </div>
 
 <script>
@@ -261,8 +261,8 @@ async function klines(sym,intv,lim){var d=await bfetch("/api/v3/klines?symbol="+
   if(sym==="PAXGUSDT"&&GOFF){for(var i=0;i<o.c.length;i++){o.o[i]+=GOFF;o.h[i]+=GOFF;o.l[i]+=GOFF;o.c[i]+=GOFF;}}return o;}
 async function stat24(sym){var d=await bfetch("/api/v3/ticker/24hr?symbol="+sym);var out={chg:+d.priceChangePercent,high:+d.highPrice,low:+d.lowPrice,last:+d.lastPrice};if(sym==="PAXGUSDT"&&GOFF){out.high+=GOFF;out.low+=GOFF;out.last+=GOFF;}return out;}
 
-var SYM="PAXGUSDT",SNAME="XAUUSD",DIG=2,TF="15m",TVSYM="OANDA:XAUUSD",TVINT="15",on=false,SIGNALS_OK=true,CMODE="tv";
-var lastGood=0,tfSec=900,TFSECS={"1m":60,"5m":300,"15m":900,"1h":3600},_cdKey=Math.floor(Date.now()/1000/900);
+var SYM="PAXGUSDT",SNAME="XAUUSD",DIG=2,TF="1m",TVSYM="OANDA:XAUUSD",TVINT="1",on=false,SIGNALS_OK=true,CMODE="tv";
+var lastGood=0,tfSec=60,TFSECS={"1m":60,"5m":300,"15m":900,"1h":3600},_cdKey=Math.floor(Date.now()/1000/60);
 var SA_ON=true;try{SA_ON=(localStorage.getItem("poetra_sa")!=="0");}catch(e){}
 var VWAP_ON=true;try{VWAP_ON=(localStorage.getItem("poetra_vwap")!=="0");}catch(e){}
 function fmt(x){return (x==null||isNaN(x))?"—":Number(x).toLocaleString("en-US",{minimumFractionDigits:DIG,maximumFractionDigits:DIG});}
