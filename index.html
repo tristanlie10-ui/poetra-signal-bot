@@ -122,9 +122,9 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
     <div id="tvchart"></div>
     <div id="utwrap" style="display:none">
       <div class="ptitle"><h2 id="utname">XAUUSD · UT Bot</h2><div class="pxwrap"><div class="px" id="utpx">—</div><div class="cd" id="utcd">⏱ --:--</div></div></div>
-      <div class="sarow"><button class="satog on" id="sabtn" onclick="toggleSA()">🎯 Auto Entry+TP Fibo: ON</button><span class="sahint">Setiap sinyal UT Bot → Entry · SL · TP1 · TP2 · TP3 otomatis (proyeksi Fibonacci 0.618 / 1.0 / 1.618)</span></div>
+      <div class="sarow"><button class="satog on" id="sabtn" onclick="toggleSA()">🎯 Auto Entry+TP Fibo: ON</button><button class="satog on" id="vwbtn" onclick="toggleVWAP()">📊 VWAP: ON</button><span class="sahint">Setiap sinyal UT Bot → Entry · SL · TP1 · TP2 · TP3 otomatis (proyeksi Fibonacci 0.618 / 1.0 / 1.618)</span></div>
       <div id="utchart"></div>
-      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA8 <span class="dot" style="background:#2f8fff"></span>EMA21 <span class="dot" style="background:#ff4d6d"></span>EMA125 <b>(Strategi 3 EMA)</b> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView) · 🎯 Auto (UT Bot + Fibonacci): <span style="color:#2f80ff">━ Entry</span> / <span style="color:#ff3b3b">━ SL</span> / <span style="color:#25e6a8">━ TP1/TP2/TP3</span> · garis Entry/SL/TP ditarik dari bar sinyal ke kanan (tidak menembus ke kiri) · POC/OB/FVG garis tipis tanpa label (biar rapi)</div>
+      <div class="legend"><span class="dot" style="background:#ffd15c"></span>EMA8 <span class="dot" style="background:#2f8fff"></span>EMA21 <span class="dot" style="background:#ff4d6d"></span>EMA125 <b>(Strategi 3 EMA)</b> · <span style="color:#26a69a">▲</span>/<span style="color:#ef5350">▼</span> UT Bot · zona <span style="color:#5b8def">OB/FVG</span> · candle update tiap 2 detik · ⏱ countdown detik berjalan ke candle berikutnya (sinkron TradingView) · 🎯 Auto (UT Bot + Fibonacci): <span style="color:#2f80ff">━ Entry</span> / <span style="color:#ff3b3b">━ SL</span> / <span style="color:#25e6a8">━ TP1/TP2/TP3</span> · garis Entry/SL/TP ditarik dari bar sinyal ke kanan (tidak menembus ke kiri) · <span style="color:#2962FF">━ VWAP + band deviasi</span> · POC/OB/FVG garis tipis tanpa label (biar rapi)</div>
     </div>
   </div>
 
@@ -141,7 +141,7 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:rad
   <div id="signalArea"><div class="grid" id="cards"></div></div>
 
   <div class="disc">⚠️ <b>Bukan nasihat keuangan.</b> <b>Maks 1% risiko/trade</b>, hormati Stop Loss. Chart TradingView asli + mode UT Bot (panah otomatis + Volume Profile POC + Order Block/FVG). Sinyal AI: Fibonacci golden zone + arah tren + UT Bot + EMA/RSI/MACD + <b>OB/FVG/POC (konfluensi SMC)</b>, kini +ADX/+DI/-DI (konfirmasi arah), filter tren HTF, konfirmasi candle close, anti-ngejar harga, SL berbasis struktur (swing/OB + buffer) & minimal Risk:Reward 1.5. Sinyal hanya keluar bila SEMUA syarat sejalan. Sistem <b>self-heal</b> otomatis menyambung ulang bila data terputus. Sinyal 24/7 + auto-Telegram oleh bot cloud. Link dashboard permanen.</div>
-  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.7 PRO — Strategi 3 EMA (8/21/125) + UT Bot untuk entry, sinkron bot Telegram semua timeframe (terkunci)</div>
+  <div class="foot">POETRA Teknologi Indonesia · versi stabil v8.8 PRO — + VWAP (anchor Session, hlc3, band deviasi) di chart; fitur 3 EMA/UT Bot/Fibonacci tetap (terkunci)</div>
 </div>
 
 <script>
@@ -174,6 +174,17 @@ function lastOB(o,h,l,c){for(var i=c.length-3;i>=1;i--){/* bullish OB: candle tu
   if(c[i]<o[i]&&c[i+1]>o[i+1]&&c[i+1]>h[i])return {type:"BULL",top:Math.max(o[i],c[i]),bot:l[i]};
   if(c[i]>o[i]&&c[i+1]<o[i+1]&&c[i+1]<l[i])return {type:"BEAR",top:h[i],bot:Math.min(o[i],c[i])};}return null;}
 
+function computeVWAP(d){var n=d.c.length;var vwap=new Array(n),up=new Array(n),lo=new Array(n);
+  var cumPV=0,cumV=0,cumPV2=0,curDay=-1,mult=1.0;
+  for(var i=0;i<n;i++){var day=Math.floor(d.t[i]/86400);if(day!==curDay){curDay=day;cumPV=0;cumV=0;cumPV2=0;}
+    var src=(d.h[i]+d.l[i]+d.c[i])/3;var vol=(d.v&&d.v[i])?d.v[i]:1;
+    cumPV+=src*vol;cumV+=vol;cumPV2+=src*src*vol;
+    var vw=cumV>0?cumPV/cumV:src;var vr=cumV>0?(cumPV2/cumV-vw*vw):0;var sd=Math.sqrt(vr>0?vr:0);
+    vwap[i]=vw;up[i]=vw+mult*sd;lo[i]=vw-mult*sd;}
+  return {vwap:vwap,up:up,lo:lo};}
+function toggleVWAP(){VWAP_ON=!VWAP_ON;var b=document.getElementById('vwbtn');
+  if(b){b.textContent='📊 VWAP: '+(VWAP_ON?'ON':'OFF');b.classList.toggle('on',VWAP_ON);}
+  try{localStorage.setItem('poetra_vwap',VWAP_ON?'1':'0');}catch(e){}if(CMODE==='ut')loadUT();}
 function computeTrade(d){var st=utStops(d.h,d.l,d.c,0.8,8);var n=d.c.length;var si=-1,buy=false;
   for(var i=n-1;i>=1;i--){var b=d.c[i]>st[i]&&d.c[i-1]<=st[i-1];var se=d.c[i]<st[i]&&d.c[i-1]>=st[i-1];if(b||se){si=i;buy=b;break;}}
   if(si<0)return null;
@@ -253,6 +264,7 @@ async function stat24(sym){var d=await bfetch("/api/v3/ticker/24hr?symbol="+sym)
 var SYM="PAXGUSDT",SNAME="XAUUSD",DIG=2,TF="15m",TVSYM="OANDA:XAUUSD",TVINT="15",on=false,SIGNALS_OK=true,CMODE="tv";
 var lastGood=0,tfSec=900,TFSECS={"1m":60,"5m":300,"15m":900,"1h":3600},_cdKey=Math.floor(Date.now()/1000/900);
 var SA_ON=true;try{SA_ON=(localStorage.getItem("poetra_sa")!=="0");}catch(e){}
+var VWAP_ON=true;try{VWAP_ON=(localStorage.getItem("poetra_vwap")!=="0");}catch(e){}
 function fmt(x){return (x==null||isNaN(x))?"—":Number(x).toLocaleString("en-US",{minimumFractionDigits:DIG,maximumFractionDigits:DIG});}
 function bcls(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"b-buy":b.indexOf("SELL")>-1?"b-sell":"b-wait";}
 function bcol(b){b=(b||"").toUpperCase();return b.indexOf("BUY")>-1?"#16d29a":b.indexOf("SELL")>-1?"#ff4d6d":"#22406e";}
@@ -272,7 +284,7 @@ function loadTV(){var el=document.getElementById("tvchart");if(!el)return;el.inn
     studies:["STD;EMA","STD;VWAP","STD;RSI","STD;MACD","STD;Average%1True%1Range"],container_id:"tvchart"});
   }catch(e){el.innerHTML='<div style="padding:24px;color:#9dbdf0;text-align:center">Chart TradingView gagal dimuat. <a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(TVSYM)+'" target="_blank" style="color:#00e0ff">Buka di TradingView →</a></div>';}}
 
-var utc,ucs,ul20,ul50,ul200,utReady=false,plLines=[],saLine={};
+var utc,ucs,ul20,ul50,ul200,utReady=false,plLines=[],saLine={},vwL,vwU,vwD;
 function initUT(){var el=document.getElementById("utchart");if(!el||utReady)return;
   utc=LightweightCharts.createChart(el,{layout:{background:{type:"solid",color:"#000000"},textColor:"#b7c4d6"},
     grid:{vertLines:{color:"rgba(120,140,170,.10)"},horzLines:{color:"rgba(120,140,170,.10)"}},
@@ -285,6 +297,9 @@ function initUT(){var el=document.getElementById("utchart");if(!el||utReady)retu
   saLine._rew=utc.addBaselineSeries({baseValue:{type:"price",price:0},topLineColor:"rgba(0,0,0,0)",bottomLineColor:"rgba(0,0,0,0)",topFillColor1:"rgba(37,230,168,0.14)",topFillColor2:"rgba(37,230,168,0.14)",bottomFillColor1:"rgba(37,230,168,0.14)",bottomFillColor2:"rgba(37,230,168,0.14)",lastValueVisible:false,priceLineVisible:false,crosshairMarkerVisible:false});
   var SACOL={entry:"rgba(56,135,255,0.85)",sl:"rgba(255,80,90,0.8)",tp1:"rgba(37,230,168,0.8)",tp2:"rgba(37,230,168,0.72)",tp3:"rgba(37,230,168,0.62)"},SATTL={entry:"Entry",sl:"SL",tp1:"TP1",tp2:"TP2",tp3:"TP3"};
   ["entry","sl","tp1","tp2","tp3"].forEach(function(k){saLine[k]=utc.addLineSeries({color:SACOL[k],lineWidth:2,lineStyle:0,priceLineVisible:false,lastValueVisible:true,title:SATTL[k],crosshairMarkerVisible:false});});
+  vwL=utc.addLineSeries({color:"#2962FF",lineWidth:2,priceLineVisible:false,lastValueVisible:true,title:"VWAP",crosshairMarkerVisible:false});
+  vwU=utc.addLineSeries({color:"rgba(38,166,154,0.55)",lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+  vwD=utc.addLineSeries({color:"rgba(38,166,154,0.55)",lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
   window.addEventListener("resize",function(){if(utc)utc.applyOptions({width:el.clientWidth,height:el.clientHeight});});
   utReady=true;}
 function clearLines(){plLines.forEach(function(pl){try{ucs.removePriceLine(pl);}catch(e){}});plLines=[];}
@@ -294,6 +309,7 @@ async function loadUT(){if(!SIGNALS_OK){document.getElementById("utpx").textCont
   try{var d=await klines(SYM,TF,300);var cd=[],e20=[],e50=[],e200=[];var ec20=ema(d.c,8),ec50=ema(d.c,21),ec200=ema(d.c,125);
     for(var i=0;i<d.t.length;i++){cd.push({time:d.t[i],open:d.o[i],high:d.h[i],low:d.l[i],close:d.c[i]});e20.push({time:d.t[i],value:ec20[i]});e50.push({time:d.t[i],value:ec50[i]});e200.push({time:d.t[i],value:ec200[i]});}
     ucs.setData(cd);ul20.setData(e20);ul50.setData(e50);ul200.setData(e200);
+    if(VWAP_ON){var _vw=computeVWAP(d);var _va=[],_vu=[],_vl=[];for(var i=0;i<d.t.length;i++){_va.push({time:d.t[i],value:_vw.vwap[i]});_vu.push({time:d.t[i],value:_vw.up[i]});_vl.push({time:d.t[i],value:_vw.lo[i]});}vwL.setData(_va);vwU.setData(_vu);vwD.setData(_vl);}else{vwL.setData([]);vwU.setData([]);vwD.setData([]);}
     var st=utStops(d.h,d.l,d.c,0.8,8);var mk=[];
     for(var i=1;i<d.c.length;i++){if(d.c[i]>st[i]&&d.c[i-1]<=st[i-1])mk.push({time:d.t[i],position:"belowBar",color:"#26a69a",shape:"arrowUp",text:"BUY"});
       else if(d.c[i]<st[i]&&d.c[i-1]>=st[i-1])mk.push({time:d.t[i],position:"aboveBar",color:"#ef5350",shape:"arrowDown",text:"SELL"});}
@@ -409,6 +425,7 @@ function watchdog(){/* jika data macet >90 detik, coba sembuhkan sendiri */
   document.getElementById("signalArea").classList.toggle("off-dim",!on);document.getElementById("banner").classList.toggle("off-dim",!on);document.getElementById("summary").classList.toggle("off-dim",!on);
   loadTV();switchChart('ut');updateClock();refreshGoldOffset().then(function(){screenNow();});
   (function(){var b=document.getElementById("sabtn");if(b){b.textContent="🎯 Auto Entry+TP Fibo: "+(SA_ON?"ON":"OFF");b.classList.toggle("on",SA_ON);}})();
+  (function(){var b=document.getElementById("vwbtn");if(b){b.textContent="📊 VWAP: "+(VWAP_ON?"ON":"OFF");b.classList.toggle("on",VWAP_ON);}})();
   setInterval(updateClock,1000);
   setInterval(refreshGoldOffset,40000);
   setInterval(tickUT,2000);                         // candle UT Bot update tiap 2 detik
